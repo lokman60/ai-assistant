@@ -222,10 +222,8 @@ class LayoutRebuilder:
         src_doc = fitz.open(original_pdf)
         out_doc = fitz.open()
 
-        try:
-            font = fitz.Font(fontfile=str(FONT_PATH))
-        except Exception:
-            font = fitz.Font("helv")
+        font_name = "helv"
+        font_file = str(FONT_PATH) if FONT_PATH.exists() else None
 
         for page_data in pages_data:
             src_page = src_doc[page_data["page_num"] - 1]
@@ -249,18 +247,19 @@ class LayoutRebuilder:
                     font_size = line["spans"][0]["size"] if line["spans"] else 10
                     block_width = original_bbox[2] - original_bbox[0]
 
-                    tw = font.text_length(text, fontsize=font_size)
+                    temp_font = fitz.Font(fontname=font_name, fontfile=font_file) if font_file else fitz.Font(fontname=font_name)
+                    tw = temp_font.text_length(text, fontsize=font_size)
                     adjusted_size = font_size
                     if tw > block_width * 0.95 and adjusted_size > 4:
                         adjusted_size = font_size * (block_width * 0.9 / tw)
 
-                    new_page.insert_text(
-                        point=(original_bbox[0], original_bbox[3] - 1),
-                        text=text,
-                        fontsize=max(adjusted_size, 4),
-                        font=font,
-                        color=(0, 0, 0),
-                    )
+                    kw = {"point": (original_bbox[0], original_bbox[3] - 1), "text": text, "fontsize": max(adjusted_size, 4), "color": (0, 0, 0)}
+                    if font_file:
+                        kw["fontname"] = font_name
+                        kw["fontfile"] = font_file
+                    else:
+                        kw["fontname"] = font_name
+                    new_page.insert_text(**kw)
 
         src_doc.close()
         out_doc.save(output_path, garbage=4, deflate=True)
