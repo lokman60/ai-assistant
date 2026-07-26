@@ -1,6 +1,6 @@
 from typing import ClassVar, List
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -32,9 +32,13 @@ class Settings(BaseSettings):
     chunk_overlap: int = 100
     top_k: int = 5
 
-    cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
-    model_config: ClassVar[dict] = {"env_file": ".env", "extra": "ignore"}
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

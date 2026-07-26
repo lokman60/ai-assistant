@@ -8,9 +8,9 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
-      - key: SECRET_KEY
+      - key: JWT_SECRET
         sync: false
-      - key: OPENAI_API_KEY
+      - key: OPENROUTER_API_KEY
         sync: false
       - key: CORS_ORIGINS
         value: https://ai-assistant.onrender.com
