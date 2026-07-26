@@ -239,6 +239,15 @@ class LayoutRebuilder:
 
             for block in page_data["text_blocks"]:
                 for line in block["lines"]:
+                    if not line["text"].strip():
+                        continue
+                    bbox = fitz.Rect(*line["bbox"])
+                    margin = 1
+                    cover = fitz.Rect(bbox.x0 - margin, bbox.y0 - margin, bbox.x1 + margin, bbox.y1 + margin)
+                    new_page.draw_rect(cover, color=None, fill=(1, 1, 1))
+
+            for block in page_data["text_blocks"]:
+                for line in block["lines"]:
                     text = line["text"]
                     if not text.strip():
                         continue
