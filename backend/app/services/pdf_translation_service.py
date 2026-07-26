@@ -49,6 +49,46 @@ def _is_rtl_language(language: str) -> bool:
     return language.lower() in RTL_LANGUAGES
 
 
+FONT_MAP = {
+    "helvetica": "Helvetica",
+    "helvetica-bold": "Helvetica-Bold",
+    "helvetica-oblique": "Helvetica-Oblique",
+    "helvetica-boldoblique": "Helvetica-BoldOblique",
+    "times-roman": "Times-Roman",
+    "timesroman": "Times-Roman",
+    "times-bold": "Times-Bold",
+    "times-italic": "Times-Italic",
+    "times-bolditalic": "Times-BoldItalic",
+    "courier": "Courier",
+    "courier-bold": "Courier-Bold",
+    "courier-oblique": "Courier-Oblique",
+    "courier-boldoblique": "Courier-BoldOblique",
+    "symbol": "Symbol",
+    "zapfdingbats": "ZapfDingbats",
+}
+
+
+def _resolve_font(pdf_font_name: str) -> str:
+    key = pdf_font_name.lower().replace(" ", "-").replace("_", "-")
+    if key in FONT_MAP:
+        return FONT_MAP[key]
+    normalized = pdf_font_name.strip()
+    try:
+        fitz.Font(fontname=normalized)
+        return normalized
+    except Exception:
+        return "Helvetica"
+
+
+def _int_to_rgb(color_int: int) -> tuple[float, float, float]:
+    if color_int == 0:
+        return (0, 0, 0)
+    r = ((color_int >> 16) & 0xFF) / 255.0
+    g = ((color_int >> 8) & 0xFF) / 255.0
+    b = (color_int & 0xFF) / 255.0
+    return (r, g, b)
+
+
 MAX_BATCH_SIZE = 30
 
 
@@ -222,20 +262,16 @@ class LayoutRebuilder:
         src_doc = fitz.open(original_pdf)
         out_doc = fitz.open()
 
-        font_name = "helv"
         font_file = str(FONT_PATH) if FONT_PATH.exists() else None
 
         for page_data in pages_data:
             src_page = src_doc[page_data["page_num"] - 1]
+            page_width = page_data["width"]
 
-            redact_rects = []
             for block in page_data["text_blocks"]:
                 for line in block["lines"]:
                     if line["text"].strip():
-                        redact_rects.append(fitz.Rect(*line["bbox"]))
-
-            for rect in redact_rects:
-                src_page.add_redact_annot(rect, fill=None)
+                        src_page.add_redact_annot(fitz.Rect(*line["bbox"]), fill=None)
             src_page.apply_redactions()
 
             out_doc.insert_pdf(src_doc, from_page=page_data["page_num"] - 1, to_page=page_data["page_num"] - 1)
@@ -247,22 +283,34 @@ class LayoutRebuilder:
                     if not text.strip():
                         continue
 
-                    original_bbox = line["bbox"]
-                    font_size = line["spans"][0]["size"] if line["spans"] else 10
-                    block_width = original_bbox[2] - original_bbox[0]
+                    span = line["spans"][0] if line["spans"] else {}
+                    original_font_name = span.get("font", "helv")
+                    original_size = span.get("size", 10)
+                    original_color = span.get("color", 0)
 
-                    temp_font = fitz.Font(fontname=font_name, fontfile=font_file) if font_file else fitz.Font(fontname=font_name)
-                    tw = temp_font.text_length(text, fontsize=font_size)
-                    adjusted_size = font_size
+                    resolved = _resolve_font(original_font_name)
+                    bbox = line["bbox"]
+                    block_width = bbox[2] - bbox[0]
+                    line_x = bbox[0]
+
+                    tw = fitz.Font(fontname=resolved, fontfile=font_file).text_length(text, fontsize=original_size) if font_file else fitz.Font(fontname=resolved).text_length(text, fontsize=original_size)
+
+                    adjusted_size = original_size
                     if tw > block_width * 0.95 and adjusted_size > 4:
-                        adjusted_size = font_size * (block_width * 0.9 / tw)
+                        adjusted_size = original_size * (block_width * 0.9 / tw)
 
-                    kw = {"point": (original_bbox[0], original_bbox[3] - 1), "text": text, "fontsize": max(adjusted_size, 4), "color": (0, 0, 0)}
+                    color = _int_to_rgb(original_color)
+                    y_pos = bbox[3] - 1
+
+                    kw = {
+                        "point": (line_x, y_pos),
+                        "text": text,
+                        "fontsize": max(adjusted_size, 4),
+                        "color": color,
+                        "fontname": resolved,
+                    }
                     if font_file:
-                        kw["fontname"] = font_name
                         kw["fontfile"] = font_file
-                    else:
-                        kw["fontname"] = font_name
                     new_page.insert_text(**kw)
 
         src_doc.close()
