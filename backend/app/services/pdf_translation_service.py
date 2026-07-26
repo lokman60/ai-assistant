@@ -227,24 +227,19 @@ class LayoutRebuilder:
 
         for page_data in pages_data:
             src_page = src_doc[page_data["page_num"] - 1]
-            pix = src_page.get_pixmap(dpi=200)
 
-            new_page = out_doc.new_page(
-                width=page_data["width"],
-                height=page_data["height"],
-            )
-
-            rect = new_page.rect
-            new_page.insert_image(rect, pixmap=pix)
-
+            redact_rects = []
             for block in page_data["text_blocks"]:
                 for line in block["lines"]:
-                    if not line["text"].strip():
-                        continue
-                    bbox = fitz.Rect(*line["bbox"])
-                    margin = 1
-                    cover = fitz.Rect(bbox.x0 - margin, bbox.y0 - margin, bbox.x1 + margin, bbox.y1 + margin)
-                    new_page.draw_rect(cover, color=None, fill=(1, 1, 1))
+                    if line["text"].strip():
+                        redact_rects.append(fitz.Rect(*line["bbox"]))
+
+            for rect in redact_rects:
+                src_page.add_redact_annot(rect, fill=None)
+            src_page.apply_redactions()
+
+            out_doc.insert_pdf(src_doc, from_page=page_data["page_num"] - 1, to_page=page_data["page_num"] - 1)
+            new_page = out_doc[-1]
 
             for block in page_data["text_blocks"]:
                 for line in block["lines"]:
