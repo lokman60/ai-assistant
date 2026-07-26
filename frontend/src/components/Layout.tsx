@@ -1,11 +1,12 @@
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { FileText, MessageSquare, Upload, Settings, LogOut, LayoutDashboard } from 'lucide-react'
+import { FileText, MessageSquare, Upload, Settings, LogOut, LayoutDashboard, Globe } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 const navItems = [
   { path: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/app/upload', label: 'Upload', icon: Upload },
   { path: '/app/chat', label: 'Chat', icon: MessageSquare },
+  { path: '/app/translate', label: 'Translate', icon: Globe },
   { path: '/app/settings', label: 'Settings', icon: Settings },
 ]
 

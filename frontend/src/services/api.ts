@@ -72,3 +72,14 @@ export const chat = {
   deleteConversation: (id: string) => api.delete(`/conversation/${id}`),
   renameConversation: (id: string, title: string) => api.patch(`/conversation/${id}`, { title }),
 }
+
+export const translate = {
+  start: (file: File, targetLanguage: string) => {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('target_language', targetLanguage)
+    return api.post('/translate-pdf', form)
+  },
+  status: (jobId: string) => api.get(`/translate-pdf/status/${jobId}`),
+  downloadUrl: (jobId: string) => `${api.defaults.baseURL || '/api'}/translate-pdf/download/${jobId}`,
+}
