@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     openrouter_model: str = "meta-llama/llama-3.3-70b-instruct"
 
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
-    embedding_dim: int = 384
+    embedding_dim: int = 1536
     chunk_size: int = 500
     chunk_overlap: int = 100
     top_k: int = 5
