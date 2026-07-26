@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.core.database import Base, engine
 from app.models import User, Document, Chunk, Conversation, Message
 from app.api.routes import auth, documents, chat, home, translation, subscription
 from app.core.config import settings
@@ -16,6 +17,8 @@ logging.basicConfig(
 )
 
 app = FastAPI(title=settings.app_name, version="1.0.0")
+
+Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,
