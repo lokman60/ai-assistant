@@ -151,7 +151,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-100/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pdf-500 to-pdf-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
               <FileText className="w-4.5 h-4.5 text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900 tracking-tight">DocAI</span>
@@ -165,7 +165,7 @@ export default function HomePage() {
             </Link>
             <Link
               to="/register"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-lg hover:from-indigo-700 hover:to-indigo-600 shadow-sm hover:shadow-md transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-pdf-600 to-pdf-500 rounded-lg hover:from-pdf-700 hover:to-pdf-600 shadow-sm hover:shadow-md transition-all"
             >
               Get Started <ArrowRight className="w-3.5 h-3.5" />
             </Link>
@@ -178,19 +178,19 @@ export default function HomePage() {
           <>
             {/* Hero Section */}
             <section className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/60" />
+              <div className="absolute inset-0 bg-gradient-to-br from-pdf-50/80 via-white to-ai-50/60" />
               <div className="absolute inset-0">
-                <div className="absolute top-[-20%] left-[-10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-indigo-200/30 to-purple-200/20 blur-3xl animate-float" />
-                <div className="absolute bottom-[-10%] right-[-5%] w-[35%] h-[35%] rounded-full bg-gradient-to-br from-sky-200/30 to-indigo-200/20 blur-3xl animate-float" style={{ animationDelay: '-3s' }} />
+                <div className="absolute top-[-20%] left-[-10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-pdf-200/30 to-ai-200/20 blur-3xl animate-float" />
+                <div className="absolute bottom-[-10%] right-[-5%] w-[35%] h-[35%] rounded-full bg-gradient-to-br from-sky-200/30 to-pdf-200/20 blur-3xl animate-float" style={{ animationDelay: '-3s' }} />
               </div>
               <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center">
                 <div className="animate-fade-in">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-medium text-indigo-600 mb-6">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pdf-50 border border-pdf-100 rounded-full text-xs font-medium text-pdf-600 mb-6">
                     <Sparkles className="w-3.5 h-3.5" /> No sign-up required
                   </div>
                   <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1]">
                     Chat with your
-                    <span className="block mt-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    <span className="block mt-1 bg-gradient-to-r from-pdf-600 via-ai-600 to-pdf-600 bg-clip-text text-transparent">
                       documents instantly
                     </span>
                   </h1>
@@ -204,9 +204,9 @@ export default function HomePage() {
                   {FEATURES.map((feature, i) => {
                     const Icon = feature.icon
                     return (
-                      <div key={i} className="group bg-white/70 backdrop-blur rounded-xl border border-gray-100 p-4 text-left hover:border-indigo-100 hover:shadow-sm transition-all animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center mb-2.5 group-hover:bg-indigo-100 transition-colors">
-                          <Icon className="w-4 h-4 text-indigo-600" />
+                      <div key={i} className="group bg-white/70 backdrop-blur rounded-xl border border-gray-100 p-4 text-left hover:border-pdf-100 hover:shadow-sm transition-all animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                        <div className="w-8 h-8 rounded-lg bg-pdf-50 flex items-center justify-center mb-2.5 group-hover:bg-pdf-100 transition-colors">
+                          <Icon className="w-4 h-4 text-pdf-600" />
                         </div>
                         <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{feature.title}</h3>
                         <p className="text-xs text-gray-500 leading-relaxed">{feature.desc}</p>
@@ -224,8 +224,8 @@ export default function HomePage() {
                     onClick={() => fileInputRef.current?.click()}
                     className={`relative group cursor-pointer rounded-2xl border-2 border-dashed p-10 sm:p-12 transition-all duration-300 ${
                       dragOver
-                        ? 'border-indigo-400 bg-indigo-50/80 scale-[1.02]'
-                        : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50/50'
+                        ? 'border-pdf-400 bg-pdf-50/80 scale-[1.02]'
+                        : 'border-gray-200 hover:border-pdf-300 hover:bg-gray-50/50'
                     }`}
                   >
                     <input ref={fileInputRef} type="file" accept=".pdf" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} hidden />
@@ -233,8 +233,8 @@ export default function HomePage() {
                     {uploading ? (
                       <div className="flex flex-col items-center gap-4">
                         <div className="relative">
-                          <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center">
-                            <FileText className="w-7 h-7 text-indigo-500" />
+                          <div className="w-16 h-16 rounded-full bg-pdf-50 flex items-center justify-center">
+                            <FileText className="w-7 h-7 text-pdf-500" />
                           </div>
                           <svg className="absolute inset-0 w-16 h-16 -rotate-90">
                             <circle cx="32" cy="32" r="28" fill="none" stroke="#e0e7ff" strokeWidth="3" />
@@ -246,13 +246,13 @@ export default function HomePage() {
                           <p className="text-xs text-gray-400 mt-0.5">Analyzing and indexing content</p>
                         </div>
                         <div className="w-full max-w-[200px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                          <div className="h-full bg-gradient-to-r from-pdf-500 to-pdf-400 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                         </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                          <Upload className="w-6 h-6 text-indigo-500" />
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pdf-50 to-pdf-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <Upload className="w-6 h-6 text-pdf-500" />
                         </div>
                         <div className="text-center">
                           <p className="text-sm font-medium text-gray-700">
@@ -293,8 +293,8 @@ export default function HomePage() {
             {/* Chat Toolbar */}
             <div className="bg-white border-b border-gray-100/80 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-4 h-4 text-indigo-600" />
+                <div className="w-8 h-8 rounded-lg bg-pdf-50 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-pdf-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{filename}</p>
@@ -310,7 +310,7 @@ export default function HomePage() {
                 </button>
                 <Link
                   to="/register"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-lg hover:from-indigo-700 hover:to-indigo-600 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-pdf-600 to-pdf-500 rounded-lg hover:from-pdf-700 hover:to-pdf-600 transition-all"
                 >
                   Sign Up <ArrowRight className="w-3 h-3" />
                 </Link>
@@ -322,8 +322,8 @@ export default function HomePage() {
               <div className="max-w-3xl mx-auto space-y-4">
                 {messages.length === 0 && !loading && (
                   <div className="flex flex-col items-center justify-center mt-16 sm:mt-24 text-center animate-fade-in">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center mb-4">
-                      <MessageSquare className="w-7 h-7 text-indigo-500" />
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pdf-50 to-pdf-100 flex items-center justify-center mb-4">
+                      <MessageSquare className="w-7 h-7 text-pdf-500" />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">Ask anything about your document</h3>
                     <p className="text-sm text-gray-400 max-w-sm">
@@ -350,12 +350,12 @@ export default function HomePage() {
                     <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${isFirst ? 'mt-2' : 'mt-0'} animate-slide-up`}>
                       <div className={`flex items-start gap-2.5 max-w-[85%] sm:max-w-[75%] ${isUser ? 'flex-row-reverse' : ''}`}>
                         {isFirst && (
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${isUser ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
                             {isUser ? 'U' : 'AI'}
                           </div>
                         )}
                         <div className={`${isFirst ? '' : 'ml-10'}`}>
-                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-100 text-gray-900 shadow-sm'}`}>
+                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-white border border-gray-100 text-gray-900 shadow-sm'}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           </div>
                           {isFirst && (
@@ -375,9 +375,9 @@ export default function HomePage() {
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0 mt-0.5">AI</div>
                       <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm">
                         <div className="flex gap-1.5">
-                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                       </div>
                     </div>
@@ -414,7 +414,7 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={() => setShowActions(!showActions)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-pdf-600 bg-pdf-50 border border-pdf-100 rounded-lg hover:bg-pdf-100 transition-all"
                     >
                       {currentAction && <currentAction.icon className="w-3 h-3" />}
                       {currentAction?.label || 'Q&A'}
@@ -430,11 +430,11 @@ export default function HomePage() {
                               key={a.value}
                               type="button"
                               onClick={() => { setAction(a.value); setShowActions(false) }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${action === a.value ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${action === a.value ? 'bg-pdf-50 text-pdf-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
                             >
                               <Icon className="w-3.5 h-3.5" />
                               {a.label}
-                              {action === a.value && <CheckCircle className="w-3 h-3 ml-auto text-indigo-500" />}
+                              {action === a.value && <CheckCircle className="w-3 h-3 ml-auto text-pdf-500" />}
                             </button>
                           )
                         })}
@@ -454,13 +454,13 @@ export default function HomePage() {
                       onChange={e => setQuestion(e.target.value)}
                       placeholder="Type your question or request..."
                       disabled={loading}
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all disabled:opacity-50"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-pdf-500/20 focus:border-pdf-400 outline-none transition-all disabled:opacity-50"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={!question.trim() || loading}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-xl hover:from-indigo-700 hover:to-indigo-600 disabled:from-gray-300 disabled:to-gray-300 shadow-sm hover:shadow-md transition-all disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pdf-600 to-pdf-500 rounded-xl hover:from-pdf-700 hover:to-pdf-600 disabled:from-gray-300 disabled:to-gray-300 shadow-sm hover:shadow-md transition-all disabled:cursor-not-allowed"
                   >
                     <Send className="w-4 h-4" />
                     <span className="hidden sm:inline">Send</span>

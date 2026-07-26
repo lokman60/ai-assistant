@@ -79,7 +79,7 @@ export default function TranslatePage() {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Globe className="w-6 h-6 text-indigo-600" />
+          <Globe className="w-6 h-6 text-ai-600" />
           Translate PDF
         </h1>
         <p className="text-sm text-gray-500 mt-1">Upload a PDF and translate it to another language while preserving the original layout</p>
@@ -92,12 +92,12 @@ export default function TranslatePage() {
           onDragLeave={() => setDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all ${
-            dragOver ? 'border-indigo-400 bg-indigo-50/80' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+            dragOver ? 'border-ai-400 bg-ai-50/80' : 'border-gray-200 hover:border-ai-300 hover:bg-gray-50'
           }`}
         >
           <input ref={fileInputRef} type="file" accept=".pdf" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center mx-auto mb-4">
-            <Upload className="w-6 h-6 text-indigo-500" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-ai-50 to-ai-100 flex items-center justify-center mx-auto mb-4">
+            <Upload className="w-6 h-6 text-ai-500" />
           </div>
           <p className="text-sm font-medium text-gray-700">Drop your PDF here, or click to browse</p>
           <p className="text-xs text-gray-400 mt-1">Preserves layout, images, and formatting</p>
@@ -105,8 +105,8 @@ export default function TranslatePage() {
       ) : (
         <div className="space-y-5">
           <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-              <FileText className="w-5 h-5 text-indigo-600" />
+            <div className="w-10 h-10 rounded-lg bg-ai-50 flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5 text-ai-600" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
@@ -121,7 +121,7 @@ export default function TranslatePage() {
               value={language}
               onChange={e => setLanguage(e.target.value)}
               disabled={!!job}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all disabled:opacity-50"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ai-500/20 focus:border-ai-400 outline-none transition-all disabled:opacity-50"
             >
               {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
@@ -131,7 +131,7 @@ export default function TranslatePage() {
             <button
               onClick={startTranslation}
               disabled={submitting}
-              className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-xl hover:from-indigo-700 hover:to-indigo-600 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+              className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-ai-600 to-ai-500 rounded-xl hover:from-ai-700 hover:to-ai-600 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
             >
               {submitting ? 'Starting...' : 'Start Translation'}
             </button>
@@ -139,10 +139,10 @@ export default function TranslatePage() {
             <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
               {job.status === 'processing' || job.status === 'queued' ? (
                 <div className="text-center">
-                  <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mx-auto mb-3" />
+                  <Loader2 className="w-10 h-10 text-ai-500 animate-spin mx-auto mb-3" />
                   <p className="text-sm font-medium text-gray-900">{job.message}</p>
                   <div className="mt-3 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-500" style={{ width: `${job.progress}%` }} />
+                    <div className="h-full bg-gradient-to-r from-ai-500 to-ai-400 rounded-full transition-all duration-500" style={{ width: `${job.progress}%` }} />
                   </div>
                   <p className="text-xs text-gray-400 mt-1">{job.progress}%</p>
                 </div>
@@ -155,7 +155,7 @@ export default function TranslatePage() {
                   <div className="flex gap-3 justify-center">
                     <a
                       href={translateApi.downloadUrl(job.id)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-lg hover:from-indigo-700 hover:to-indigo-600 shadow-sm hover:shadow-md transition-all"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-ai-600 to-ai-500 rounded-lg hover:from-ai-700 hover:to-ai-600 shadow-sm hover:shadow-md transition-all"
                     >
                       <Download className="w-4 h-4" /> Download Translated PDF
                     </a>

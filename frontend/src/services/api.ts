@@ -83,3 +83,9 @@ export const translate = {
   status: (jobId: string) => api.get(`/translate-pdf/status/${jobId}`),
   downloadUrl: (jobId: string) => `${api.defaults.baseURL || '/api'}/translate-pdf/download/${jobId}`,
 }
+
+export const subscription = {
+  plan: () => api.get('/me/plan'),
+  upgrade: () => api.post('/upgrade'),
+  downgrade: () => api.post('/downgrade'),
+}

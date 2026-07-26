@@ -2,9 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', sans-serif;
-  -webkit-font-smoothing: antialiased;
+@layer base {
+  body {
+    @apply bg-surface text-text-primary font-sans antialiased;
+  }
+
+  .dark body,
+  body.dark {
+    @apply bg-surface-dark text-text-primary-dark;
+  }
+
+  ::selection {
+    @apply bg-pdf-600/20 text-pdf-900;
+  }
+
+  .dark ::selection {
+    @apply bg-pdf-400/20 text-pdf-100;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-gray-600;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-border rounded-2xl shadow-soft;
+  }
+
+  .dark .card {
+    @apply bg-surface-card-dark border-border-dark;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-soft-md;
+  }
+
+  .dark .card-hover {
+    @apply hover:border-gray-600;
+  }
+
+  .card-hover {
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-pdf-600 rounded-xl hover:bg-pdf-700 shadow-soft hover:shadow-soft-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ai {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-ai-600 rounded-xl hover:bg-ai-700 shadow-soft hover:shadow-soft-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-100 rounded-xl transition-all duration-200;
+  }
+
+  .dark .btn-ghost {
+    @apply hover:bg-gray-800;
+  }
+
+  .input {
+    @apply w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm text-text-primary placeholder-text-secondary/50 focus:ring-2 focus:ring-pdf-500/20 focus:border-pdf-500 outline-none transition-all;
+  }
+
+  .dark .input {
+    @apply bg-surface-card-dark border-border-dark text-text-primary-dark focus:ring-pdf-400/20 focus:border-pdf-400;
+  }
+
+  .badge-pro {
+    @apply inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white bg-gradient-to-r from-ai-600 to-ai-500 rounded-md;
+  }
 }

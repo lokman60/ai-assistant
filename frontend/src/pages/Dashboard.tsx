@@ -21,7 +21,7 @@ export default function Dashboard() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <Link to="/upload" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+        <Link to="/upload" className="flex items-center gap-2 bg-pdf-600 text-white px-4 py-2 rounded-lg hover:bg-pdf-700 transition-colors text-sm font-medium">
           <Upload className="w-4 h-4" />
           Upload Document
         </Link>
@@ -30,7 +30,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <Files className="w-8 h-8 text-blue-600" />
+            <Files className="w-8 h-8 text-pdf-600" />
             <div>
               <p className="text-2xl font-bold text-gray-900">{docs.length}</p>
               <p className="text-sm text-gray-500">Documents</p>
@@ -48,7 +48,7 @@ export default function Dashboard() {
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <FileText className="w-8 h-8 text-purple-600" />
+            <FileText className="w-8 h-8 text-ai-600" />
             <div>
               <p className="text-2xl font-bold text-gray-900">
                 {docs.filter((d: any) => d.status === 'ready').length}
@@ -63,7 +63,7 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Documents</h2>
           {docs.length === 0 ? (
-            <p className="text-gray-500 text-sm">No documents yet. <Link to="/upload" className="text-blue-600 hover:underline">Upload one</Link></p>
+            <p className="text-gray-500 text-sm">No documents yet. <Link to="/upload" className="text-pdf-600 hover:underline">Upload one</Link></p>
           ) : (
             <div className="space-y-3">
               {docs.slice(0, 5).map((doc: any) => (
@@ -85,7 +85,7 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Conversations</h2>
           {convs.length === 0 ? (
-            <p className="text-gray-500 text-sm">No conversations yet. <Link to="/chat" className="text-blue-600 hover:underline">Start one</Link></p>
+            <p className="text-gray-500 text-sm">No conversations yet. <Link to="/chat" className="text-pdf-600 hover:underline">Start one</Link></p>
           ) : (
             <div className="space-y-3">
               {convs.slice(0, 5).map((conv: any) => (

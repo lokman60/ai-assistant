@@ -52,7 +52,7 @@ export default function UploadPage() {
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors mb-8 ${
-          isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+          isDragActive ? 'border-pdf-500 bg-pdf-50' : 'border-gray-300 hover:border-pdf-400 hover:bg-gray-50'
         }`}
       >
         <input {...getInputProps()} />
@@ -64,8 +64,8 @@ export default function UploadPage() {
       </div>
 
       {uploadMutation.isPending && (
-        <div className="bg-blue-50 text-blue-700 p-4 rounded-lg mb-6 flex items-center gap-3">
-          <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full" />
+        <div className="bg-pdf-50 text-pdf-700 p-4 rounded-lg mb-6 flex items-center gap-3">
+          <div className="animate-spin w-5 h-5 border-2 border-pdf-600 border-t-transparent rounded-full" />
           Uploading and processing document...
         </div>
       )}
@@ -83,13 +83,13 @@ export default function UploadPage() {
             {docs.map((doc: any) => (
               <div key={doc.id} className="px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
-                  <FileText className="w-5 h-5 text-blue-600" />
+                  <FileText className="w-5 h-5 text-pdf-600" />
                   {editingId === doc.id ? (
                     <div className="flex items-center gap-2">
                       <input
                         type="text" value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-pdf-500 outline-none"
                         autoFocus
                       />
                       <button onClick={() => renameMutation.mutate({ id: doc.id, title: editTitle })}

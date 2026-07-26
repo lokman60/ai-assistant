@@ -103,17 +103,17 @@ export default function ChatPage() {
     <div className="flex h-full">
       <div className="w-72 border-r border-gray-200 bg-white p-4 flex flex-col">
         <button onClick={startNewChat}
-          className="flex items-center gap-2 w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium mb-4">
+          className="flex items-center gap-2 w-full px-4 py-2.5 bg-pdf-600 text-white rounded-lg hover:bg-pdf-700 transition-colors text-sm font-medium mb-4">
           <Plus className="w-4 h-4" /> New Chat
         </button>
         <div className="mb-4">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Documents</h3>
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {readyDocs.map((doc: any) => (
-              <label key={doc.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${selectedDocs.includes(doc.id) ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <label key={doc.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${selectedDocs.includes(doc.id) ? 'bg-pdf-50 text-pdf-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                 <input type="checkbox" checked={selectedDocs.includes(doc.id)}
                   onChange={() => setSelectedDocs((prev) => prev.includes(doc.id) ? prev.filter((id) => id !== doc.id) : [...prev, doc.id])}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  className="rounded border-gray-300 text-pdf-600 focus:ring-pdf-500" />
                 <FileText className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="truncate">{doc.title}</span>
               </label>
@@ -148,7 +148,7 @@ export default function ChatPage() {
           )}
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[75%] rounded-2xl px-5 py-3 ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+              <div className={`max-w-[75%] rounded-2xl px-5 py-3 ${msg.role === 'user' ? 'bg-pdf-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               </div>
             </div>
@@ -191,7 +191,7 @@ export default function ChatPage() {
                 <div className="absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48">
                   {ACTIONS.map(a => (
                     <button key={a.value} type="button" onClick={() => { setAction(a.value); setShowActions(false) }}
-                      className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${action === a.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}>
+                      className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${action === a.value ? 'bg-pdf-50 text-pdf-700' : 'text-gray-700'}`}>
                       <div className="font-medium">{a.label}</div>
                       <div className="text-gray-400 truncate">{a.desc}</div>
                     </button>
@@ -205,10 +205,10 @@ export default function ChatPage() {
               type="text" value={question} onChange={(e) => setQuestion(e.target.value)}
               placeholder={selectedDocs.length === 0 ? 'Select documents to start' : 'Type your request...'}
               disabled={selectedDocs.length === 0 || chatMutation.isPending}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pdf-500 focus:border-pdf-500 outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400"
             />
             <button type="submit" disabled={!question.trim() || selectedDocs.length === 0 || chatMutation.isPending}
-              className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 disabled:bg-gray-300 transition-colors">
+              className="bg-pdf-600 text-white p-3 rounded-xl hover:bg-pdf-700 disabled:bg-gray-300 transition-colors">
               <Send className="w-5 h-5" />
             </button>
           </div>

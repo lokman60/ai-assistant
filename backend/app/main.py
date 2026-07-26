@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.models import User, Document, Chunk, Conversation, Message
-from app.api.routes import auth, documents, chat, home, translation
+from app.api.routes import auth, documents, chat, home, translation, subscription
 from app.core.config import settings
 
 logging.basicConfig(
@@ -30,6 +30,7 @@ app.include_router(documents.router)
 app.include_router(chat.router)
 app.include_router(home.router)
 app.include_router(translation.router)
+app.include_router(subscription.router)
 
 
 @app.get("/health")
