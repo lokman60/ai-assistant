@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
+import socket
 import threading
 import time
 import uuid
@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 
 RTL_LANGUAGES = {"arabic", "arab", "persian", "farsi", "urdu", "hebrew", "yiddish", "pashto", "dari", "kurdish", "sindhi"}
 
-FONT_URL = "https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans%5Bwdth,wght%5D.ttf"
+FONT_URLS = [
+    "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosans/NotoSans-Regular.ttf",
+    "https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans%5Bwdth,wght%5D.ttf",
+]
 FONT_PATH = Path(__file__).resolve().parent.parent.parent / "fonts" / "NotoSans.ttf"
 
 _jobs: dict[str, dict] = {}
@@ -26,12 +29,20 @@ _jobs_lock = threading.Lock()
 
 
 def _ensure_font():
-    if not FONT_PATH.exists():
-        FONT_PATH.parent.mkdir(parents=True, exist_ok=True)
-        logger.info("Downloading Noto Sans font from Google Fonts...")
-        import urllib.request
-        urllib.request.urlretrieve(FONT_URL, str(FONT_PATH))
-        logger.info("Font downloaded to %s", FONT_PATH)
+    if FONT_PATH.exists():
+        return
+    FONT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    for url in FONT_URLS:
+        try:
+            logger.info("Downloading font from %s...", url)
+            import urllib.request
+            socket.setdefaulttimeout(15)
+            urllib.request.urlretrieve(url, str(FONT_PATH))
+            logger.info("Font downloaded to %s", FONT_PATH)
+            return
+        except Exception as e:
+            logger.warning("Font download failed from %s: %s", url, e)
+    logger.warning("All font downloads failed — will use built-in font (RTL scripts may not render)")
 
 
 def _is_rtl_language(language: str) -> bool:
@@ -201,7 +212,7 @@ class TranslationService:
 class LayoutRebuilder:
     def __init__(self, output_dir: str):
         self._output_dir = output_dir
-        _ensure_font()
+        _ensure_font()  # try background download, non-fatal if it fails
 
     def rebuild(self, pages_data: list[dict], original_pdf: str) -> str:
         job_id = str(uuid.uuid4())
@@ -211,7 +222,10 @@ class LayoutRebuilder:
         src_doc = fitz.open(original_pdf)
         out_doc = fitz.open()
 
-        font = fitz.Font(fontfile=str(FONT_PATH)) if FONT_PATH.exists() else fitz.Font("helv")
+        try:
+            font = fitz.Font(fontfile=str(FONT_PATH))
+        except Exception:
+            font = fitz.Font("helv")
 
         for page_data in pages_data:
             src_page = src_doc[page_data["page_num"] - 1]
