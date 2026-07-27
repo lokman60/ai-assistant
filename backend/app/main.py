@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.database import Base, engine
 from app.models import User, Document, Chunk, Conversation, Message
-from app.api.routes import auth, documents, chat, home, translation, subscription
+from app.api.routes import auth, documents, chat, home, translation, subscription, google_auth
 from app.core.config import settings
 
 logging.basicConfig(
@@ -44,6 +44,14 @@ app.include_router(chat.router)
 app.include_router(home.router)
 app.include_router(translation.router)
 app.include_router(subscription.router)
+app.include_router(google_auth.router)
+
+
+@app.get("/api/config")
+def get_config():
+    return {
+        "google_client_id": settings.google_client_id,
+    }
 
 
 @app.get("/health")

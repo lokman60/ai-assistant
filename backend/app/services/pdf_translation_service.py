@@ -290,6 +290,48 @@ class LayoutRebuilder:
         self._output_dir = output_dir
         _ensure_font()
 
+    def _original_line_height(self, lines: list[dict], font_size: float) -> float:
+        if len(lines) >= 2:
+            gaps = []
+            for i in range(len(lines) - 1):
+                g = lines[i + 1]["bbox"][1] - lines[i]["bbox"][1]
+                if g > 0:
+                    gaps.append(g)
+            if gaps:
+                return sum(gaps) / len(gaps)
+        return lines[0]["bbox"][3] - lines[0]["bbox"][1]
+
+    @staticmethod
+    def _merge_block_text(lines: list[dict]) -> str:
+        parts = []
+        for li, line in enumerate(lines):
+            t = line["text"].strip()
+            if t:
+                if parts and not t[0] in ".!?,:;)]}%":
+                    parts.append(" ")
+                parts.append(t)
+        return "".join(parts)
+
+    def _compute_wrapped(self, font_obj, full_text: str, block_width: float, font_size: float,
+                         max_width_expansion: float = 0, page_width: float = 0, block_x: float = 0):
+        used_width = block_width
+        if max_width_expansion > 0:
+            available = min(block_x + block_width + max_width_expansion, page_width - 10)
+            used_width = available - block_x
+
+        tw = font_obj.text_length(full_text, fontsize=font_size)
+        if tw <= used_width:
+            return [full_text], font_size, used_width
+
+        wrapped = _wrap_text(full_text, font_obj, used_width, font_size)
+        max_wl = max(font_obj.text_length(wl, fontsize=font_size) for wl in wrapped)
+        if max_wl <= used_width:
+            return wrapped, font_size, used_width
+
+        ratio = used_width / max_wl
+        reduced = max(font_size * ratio, font_size * 0.9)
+        return _wrap_text(full_text, font_obj, used_width, reduced), reduced, used_width
+
     def rebuild(self, pages_data: list[dict], original_pdf: str) -> str:
         job_id = str(uuid.uuid4())
         output_path = os.path.join(self._output_dir, f"{job_id}.pdf")
@@ -297,84 +339,235 @@ class LayoutRebuilder:
 
         src_doc = fitz.open(original_pdf)
         out_doc = fitz.open()
-
         font_file = str(FONT_PATH) if FONT_PATH.exists() else None
 
-        for page_data in pages_data:
-            src_page = src_doc[page_data["page_num"] - 1]
+        overflow_blocks = []
 
+        for page_data in pages_data:
+            page_num = page_data["page_num"]
+            src_page = src_doc[page_num - 1]
+            page_width = src_page.rect.width
+            page_height = src_page.rect.height
+
+            all_blocks = []
+            for ov in overflow_blocks:
+                all_blocks.append({"block": ov, "overflow": True})
+            overflow_blocks = []
+            for block in page_data["text_blocks"]:
+                all_blocks.append({"block": block, "overflow": False})
+
+            all_blocks.sort(key=lambda b: (
+                0 if b["overflow"] else b["block"]["bbox"][1]
+            ))
+
+            page_items = []
+            shift_y = 0.0
+            overflow_started = False
+
+            for binfo in all_blocks:
+                block = binfo["block"]
+                lines = block["lines"]
+                is_overflow = binfo["overflow"]
+                bbox = block["bbox"]
+                block_x = bbox[0]
+                block_width = bbox[2] - bbox[0]
+                orig_height = bbox[3] - bbox[1] if not is_overflow else 0
+
+                if overflow_started:
+                    overflow_blocks.append(block)
+                    continue
+
+                first_span = lines[0]["spans"][0] if lines and lines[0]["spans"] else {}
+                font_name = first_span.get("font", "helv")
+                font_size = first_span.get("size", 10)
+                flags = first_span.get("flags", 0)
+                font_color = first_span.get("color", 0)
+                resolved = _resolve_font(font_name, flags)
+                color = _int_to_rgb(font_color)
+                font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
+                orig_line_height = self._original_line_height(lines, font_size)
+                line_height = orig_line_height if orig_line_height > 0 else font_size * 1.3
+
+                bullet_count = sum(1 for l in lines if re.match(r"^\s*[•\-*\d]+[\.\)]\s", l["text"].strip()))
+                is_bullet = bullet_count >= 2
+
+                if is_bullet:
+                    bullet_items = []
+                    cumulative_h = 0
+                    for line in lines:
+                        text = line["text"].strip()
+                        if not text:
+                            continue
+                        wl, fs, uw = self._compute_wrapped(font_obj, text, block_width, font_size,
+                                                           block_width * 0.15, page_width, block_x)
+                        bullet_items.append({"texts": wl, "top": cumulative_h})
+                        cumulative_h += len(wl) * line_height
+
+                    total_h = cumulative_h
+                    extra = max(0, total_h - orig_height)
+                    new_y0 = (0 if is_overflow else bbox[1]) + shift_y
+                    new_y1 = new_y0 + max(orig_height, total_h)
+
+                    if new_y1 > page_height:
+                        overflow_started = True
+                        overflow_blocks.append(block)
+                        continue
+
+                    page_items.append({
+                        "type": "bullet",
+                        "bullet_items": bullet_items,
+                        "block_x": block_x,
+                        "font_size": font_size,
+                        "resolved": resolved,
+                        "color": color,
+                        "font_file": font_file,
+                        "line_height": line_height,
+                        "new_y0": new_y0,
+                    })
+                    shift_y += extra
+                else:
+                    full_text = self._merge_block_text(lines)
+                    if not full_text:
+                        continue
+
+                    wrapped, used_size, used_width = self._compute_wrapped(
+                        font_obj, full_text, block_width, font_size,
+                        block_width * 0.15, page_width, block_x
+                    )
+
+                    required_height = len(wrapped) * line_height
+                    extra = max(0, required_height - orig_height)
+                    new_y0 = (0 if is_overflow else bbox[1]) + shift_y
+                    new_y1 = new_y0 + max(orig_height, required_height)
+
+                    if new_y1 > page_height:
+                        overflow_started = True
+                        overflow_blocks.append(block)
+                        continue
+
+                    page_items.append({
+                        "type": "para",
+                        "wrapped": wrapped,
+                        "block_x": block_x,
+                        "font_size": used_size,
+                        "resolved": resolved,
+                        "color": color,
+                        "font_file": font_file,
+                        "line_height": line_height,
+                        "new_y0": new_y0,
+                    })
+                    shift_y += extra
+
+            src_page = src_doc[page_num - 1]
             for block in page_data["text_blocks"]:
                 for line in block["lines"]:
                     if line["text"].strip():
                         src_page.add_redact_annot(fitz.Rect(*line["bbox"]), fill=None)
             src_page.apply_redactions()
 
-            out_doc.insert_pdf(src_doc, from_page=page_data["page_num"] - 1, to_page=page_data["page_num"] - 1)
+            out_doc.insert_pdf(src_doc, from_page=page_num - 1, to_page=page_num - 1)
             new_page = out_doc[-1]
 
-            for block in page_data["text_blocks"]:
+            for item in page_items:
+                bx = item["block_x"]
+                fs = item["font_size"]
+                resolved = item["resolved"]
+                color = item["color"]
+                ffile = item["font_file"]
+                lh = item["line_height"]
+                y0 = item["new_y0"]
+
+                if item["type"] == "bullet":
+                    for bi in item["bullet_items"]:
+                        y = y0 + bi["top"]
+                        for wl in bi["texts"]:
+                            new_page.insert_text((bx, y), wl, fontsize=fs, color=color,
+                                                 fontname=resolved, fontfile=ffile)
+                            y += lh
+                else:
+                    y = y0
+                    for wl in item["wrapped"]:
+                        new_page.insert_text((bx, y), wl, fontsize=fs, color=color,
+                                             fontname=resolved, fontfile=ffile)
+                        y += lh
+
+        while overflow_blocks:
+            page_width = src_doc[-1].rect.width
+            page_height = src_doc[-1].rect.height
+            new_pg = out_doc.new_page(width=page_width, height=page_height)
+
+            shift_y = 0.0
+            still_overflowing = []
+
+            for block in overflow_blocks:
                 lines = block["lines"]
-                if not lines:
-                    continue
-
                 bbox = block["bbox"]
-                block_width = bbox[2] - bbox[0]
                 block_x = bbox[0]
-                block_y0 = bbox[1]
-                block_y1 = bbox[3]
+                block_width = bbox[2] - bbox[0]
 
-                first_span = lines[0]["spans"][0] if lines[0]["spans"] else {}
+                first_span = lines[0]["spans"][0] if lines and lines[0]["spans"] else {}
                 font_name = first_span.get("font", "helv")
                 font_size = first_span.get("size", 10)
                 flags = first_span.get("flags", 0)
                 font_color = first_span.get("color", 0)
-
                 resolved = _resolve_font(font_name, flags)
-
-                parts = []
-                for li, line in enumerate(lines):
-                    t = line["text"].strip()
-                    if t:
-                        if parts and not t[0] in ".!?,:;)]}%":
-                            parts.append(" ")
-                        parts.append(t)
-                full_text = "".join(parts)
-                if not full_text:
-                    continue
-
-                font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
-                tw = font_obj.text_length(full_text, fontsize=font_size)
-
-                used_size = font_size
-                if tw > block_width * 0.95:
-                    wrapped = _wrap_text(full_text, font_obj, block_width * 0.95, font_size)
-                    max_wl = max(font_obj.text_length(wl, fontsize=font_size) for wl in wrapped)
-                    if max_wl > block_width * 0.95 and used_size > 4:
-                        ratio = block_width * 0.9 / max_wl
-                        used_size = max(font_size * ratio, font_size * 0.7)
-                        font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
-                        wrapped = _wrap_text(full_text, font_obj, block_width * 0.95, used_size)
-                else:
-                    wrapped = [full_text]
-
-                line_height = used_size * 1.3
-                total_height = len(wrapped) * line_height
-                block_height = block_y1 - block_y0
-                if total_height > block_height and used_size > 5:
-                    ratio = block_height / total_height
-                    used_size = max(used_size * ratio * 0.9, font_size * 0.7)
-                    line_height = used_size * 1.3
-                    font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
-                    wrapped = _wrap_text(full_text, font_obj, block_width * 0.95, used_size)
-
                 color = _int_to_rgb(font_color)
-                first_line = lines[0]
-                start_y = first_line["bbox"][3] - 1
+                font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
+                orig_line_height = self._original_line_height(lines, font_size)
+                lh = orig_line_height if orig_line_height > 0 else font_size * 1.3
 
-                y = start_y
-                for wl in wrapped:
-                    new_page.insert_text((block_x, y), wl, fontsize=used_size, color=color, fontname=resolved, fontfile=font_file)
-                    y += line_height
+                bullet_count = sum(1 for l in lines if re.match(r"^\s*[•\-*\d]+[\.\)]\s", l["text"].strip()))
+                is_bullet = bullet_count >= 2
+
+                if is_bullet:
+                    bullet_items = []
+                    cumulative_h = 0
+                    for line in lines:
+                        text = line["text"].strip()
+                        if not text:
+                            continue
+                        wl, fs, uw = self._compute_wrapped(font_obj, text, block_width, font_size,
+                                                           block_width * 0.15, page_width, block_x)
+                        bullet_items.append({"texts": wl, "top": cumulative_h})
+                        cumulative_h += len(wl) * lh
+
+                    new_y0 = shift_y
+                    new_y1 = new_y0 + cumulative_h
+
+                    if new_y1 > page_height:
+                        still_overflowing.append(block)
+                        continue
+
+                    for bi in bullet_items:
+                        y = new_y0 + bi["top"]
+                        for wl in bi["texts"]:
+                            new_pg.insert_text((block_x, y), wl, fontsize=fs, color=color,
+                                               fontname=resolved, fontfile=font_file)
+                            y += lh
+                    shift_y += cumulative_h
+                else:
+                    full_text = self._merge_block_text(lines)
+                    if not full_text:
+                        continue
+
+                    wrapped, used_size, uw = self._compute_wrapped(font_obj, full_text, block_width, font_size,
+                                                                   block_width * 0.15, page_width, block_x)
+                    required_height = len(wrapped) * lh
+                    new_y0 = shift_y
+                    new_y1 = new_y0 + required_height
+
+                    if new_y1 > page_height:
+                        still_overflowing.append(block)
+                        continue
+
+                    y = new_y0
+                    for wl in wrapped:
+                        new_pg.insert_text((block_x, y), wl, fontsize=used_size, color=color,
+                                           fontname=resolved, fontfile=font_file)
+                        y += lh
+                    shift_y += required_height
+
+            overflow_blocks = still_overflowing
 
         src_doc.close()
         out_doc.save(output_path, garbage=4, deflate=True)

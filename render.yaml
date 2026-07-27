@@ -16,3 +16,7 @@ services:
         value: https://ai-assistant.onrender.com
       - key: DATABASE_URL
         value: sqlite:///./data/ai_docs.db
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

@@ -2,14 +2,18 @@ import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { FileText } from 'lucide-react'
+import { GoogleLogin } from '@react-oauth/google'
+import { useGoogleAuth } from '../services/googleAuth'
 
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
-  const { register } = useAuth()
+  const { register, googleLogin } = useAuth()
   const navigate = useNavigate()
+
+  const googleAuthAvailable = useGoogleAuth()
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -23,6 +27,15 @@ export default function Register() {
       navigate('/login')
     } catch (err: any) {
       setError(err.message || 'Registration failed')
+    }
+  }
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      await googleLogin(credentialResponse.credential)
+      navigate('/app/dashboard')
+    } catch (err: any) {
+      setError(err.message || 'Google sign-in failed')
     }
   }
 
@@ -59,6 +72,24 @@ export default function Register() {
           <button type="submit" className="w-full bg-pdf-600 text-white py-2.5 rounded-lg font-medium hover:bg-pdf-700 dark:hover:bg-pdf-500 transition-colors">
             Create Account
           </button>
+          {googleAuthAvailable && (
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200 dark:border-border-dark" /></div>
+                <div className="relative flex justify-center text-sm"><span className="bg-white dark:bg-surface-card-dark px-2 text-gray-500 dark:text-gray-400">or</span></div>
+              </div>
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google sign-in failed')}
+                  theme="outline"
+                  size="large"
+                  text="signup_with"
+                  shape="rectangular"
+                />
+              </div>
+            </>
+          )}
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
             Already have an account? <Link to="/login" className="text-pdf-600 hover:underline">Sign in</Link>
           </p>

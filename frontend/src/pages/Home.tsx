@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Upload, Send, FileText, MessageSquare, ChevronDown, LogIn, X, Sparkles, Shield, Zap, CheckCircle, ArrowRight, Globe } from 'lucide-react'
 import UpgradeDialog from '../components/UpgradeDialog'
+import { useAuth } from '../hooks/useAuth'
 import axios from 'axios'
 
 interface Source { filename: string; page_number: number }
@@ -25,6 +26,7 @@ const FEATURES = [
 ]
 
 export default function HomePage() {
+  const { user } = useAuth()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [filename, setFilename] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -171,10 +173,10 @@ export default function HomePage() {
               <LogIn className="w-4 h-4" /> Sign In
             </Link>
             <Link
-              to="/register"
+              to={user ? '/app/dashboard' : '/register'}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-pdf-600 to-pdf-500 rounded-lg hover:from-pdf-700 hover:to-pdf-600 shadow-sm hover:shadow-md transition-all"
             >
-              Get Started <ArrowRight className="w-3.5 h-3.5" />
+              {user ? 'Dashboard' : 'Get Started'} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
@@ -327,7 +329,7 @@ export default function HomePage() {
                 <span className="text-gray-300">|</span>
                 <Link to="/login" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Sign In</Link>
                 <span className="text-gray-300 dark:text-gray-600">|</span>
-                <Link to="/register" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Create Account</Link>
+                <Link to={user ? '/app/dashboard' : '/register'} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{user ? 'Dashboard' : 'Create Account'}</Link>
               </div>
             </footer>
           </>
@@ -352,10 +354,10 @@ export default function HomePage() {
                   <Upload className="w-3.5 h-3.5" /> New Document
                 </button>
                 <Link
-                  to="/register"
+                  to={user ? '/app/dashboard' : '/register'}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-pdf-600 to-pdf-500 rounded-lg hover:from-pdf-700 hover:to-pdf-600 transition-all"
                 >
-                  Sign Up <ArrowRight className="w-3 h-3" />
+                  {user ? 'Dashboard' : 'Sign Up'} <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>

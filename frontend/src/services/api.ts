@@ -55,6 +55,8 @@ export const auth = {
   refresh: (refresh_token: string) =>
     api.post('/refresh', { refresh_token }),
   me: () => api.get('/me'),
+  googleLogin: (credential: string) =>
+    api.post('/auth/google', { credential }),
 }
 
 export const documents = {

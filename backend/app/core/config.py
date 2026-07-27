@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     chunk_overlap: int = 100
     top_k: int = 5
 
+    google_client_id: str = ""
+    google_client_secret: str = ""
+
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
     @property
