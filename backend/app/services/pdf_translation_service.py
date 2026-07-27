@@ -68,16 +68,56 @@ FONT_MAP = {
 }
 
 
-def _resolve_font(pdf_font_name: str) -> str:
+def _resolve_font(pdf_font_name: str, flags: int = 0) -> str:
     key = pdf_font_name.lower().replace(" ", "-").replace("_", "-")
+    is_bold = "bold" in key or (flags & 16)
+    if is_bold and not key.endswith("bold"):
+        key += "-bold"
     if key in FONT_MAP:
         return FONT_MAP[key]
     normalized = pdf_font_name.strip()
+    if is_bold and "bold" not in normalized.lower():
+        try:
+            fitz.Font(fontname=normalized + "-Bold")
+            return normalized + "-Bold"
+        except Exception:
+            pass
     try:
         fitz.Font(fontname=normalized)
         return normalized
     except Exception:
-        return "Helvetica"
+        return "Helvetica-Bold" if is_bold else "Helvetica"
+
+
+def _is_bullet_line(text: str) -> bool:
+    return bool(re.match(r"^\s*[•\-\*–\d]+\.?\s", text))
+
+
+def _wrap_text(text: str, font_obj, max_width: float, fontsize: float) -> list[str]:
+    words = text.split()
+    if not words:
+        return [text]
+
+    lines = []
+    current_line = []
+    current_width = 0.0
+    space_width = font_obj.text_length(" ", fontsize=fontsize)
+
+    for word in words:
+        word_width = font_obj.text_length(word, fontsize=fontsize)
+        if current_width + word_width + (space_width if current_line else 0) <= max_width:
+            current_line.append(word)
+            current_width += word_width + (space_width if len(current_line) > 1 else 0)
+        else:
+            if current_line:
+                lines.append(" ".join(current_line))
+            current_line = [word]
+            current_width = word_width
+
+    if current_line:
+        lines.append(" ".join(current_line))
+
+    return lines if lines else [text]
 
 
 def _int_to_rgb(color_int: int) -> tuple[float, float, float]:
@@ -277,29 +317,50 @@ class LayoutRebuilder:
             out_doc.insert_pdf(src_doc, from_page=page_data["page_num"] - 1, to_page=page_data["page_num"] - 1)
             new_page = out_doc[-1]
 
-            for block in page_data["text_blocks"]:
-                block_font_size = None
+            blocks = page_data["text_blocks"]
+            block_font_sizes = []
+
+            for block in blocks:
+                line_sizes = []
                 for line in block["lines"]:
                     text = line["text"]
                     if not text.strip():
+                        line_sizes.append(None)
                         continue
                     span = line["spans"][0] if line["spans"] else {}
                     original_size = span.get("size", 10)
                     bbox = line["bbox"]
                     block_width = bbox[2] - bbox[0]
-                    resolved = _resolve_font(span.get("font", "helv"))
+                    flags = span.get("flags", 0)
+                    resolved = _resolve_font(span.get("font", "helv"), flags)
 
-                    tw = fitz.Font(fontname=resolved, fontfile=font_file).text_length(text, fontsize=original_size) if font_file else fitz.Font(fontname=resolved).text_length(text, fontsize=original_size)
+                    font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
+                    tw = font_obj.text_length(text, fontsize=original_size)
 
-                    line_size = original_size
-                    if tw > block_width * 0.95 and line_size > 4:
-                        line_size = original_size * (block_width * 0.9 / tw)
-                    if block_font_size is None or line_size < block_font_size:
-                        block_font_size = line_size
+                    if tw <= block_width * 0.95:
+                        line_sizes.append(original_size)
+                    else:
+                        wrapped = _wrap_text(text, font_obj, block_width * 0.95, original_size)
+                        max_wl_width = max(font_obj.text_length(wl, fontsize=original_size) for wl in wrapped)
+                        if max_wl_width <= block_width * 0.95:
+                            line_sizes.append(original_size)
+                        else:
+                            ratio = block_width * 0.9 / max_wl_width
+                            line_sizes.append(max(original_size * ratio, original_size * 0.7))
 
-                if block_font_size is None:
-                    block_font_size = 10
+                valid = [s for s in line_sizes if s is not None]
+                block_font_sizes.append(min(valid) if valid else 10)
 
+            for bi in range(1, len(blocks)):
+                prev_line = blocks[bi - 1]["lines"][0]["text"] if blocks[bi - 1]["lines"] else ""
+                curr_line = blocks[bi]["lines"][0]["text"] if blocks[bi]["lines"] else ""
+                if _is_bullet_line(prev_line) and _is_bullet_line(curr_line):
+                    shared = min(block_font_sizes[bi - 1], block_font_sizes[bi])
+                    block_font_sizes[bi - 1] = shared
+                    block_font_sizes[bi] = shared
+
+            for bi, block in enumerate(blocks):
+                block_font_size = block_font_sizes[bi]
                 for line in block["lines"]:
                     text = line["text"]
                     if not text.strip():
@@ -307,21 +368,24 @@ class LayoutRebuilder:
                     span = line["spans"][0] if line["spans"] else {}
                     original_font_name = span.get("font", "helv")
                     original_color = span.get("color", 0)
-                    resolved = _resolve_font(original_font_name)
+                    flags = span.get("flags", 0)
+                    resolved = _resolve_font(original_font_name, flags)
                     bbox = line["bbox"]
                     color = _int_to_rgb(original_color)
                     y_pos = bbox[3] - 1
 
-                    kw = {
-                        "point": (bbox[0], y_pos),
-                        "text": text,
-                        "fontsize": max(block_font_size, 4),
-                        "color": color,
-                        "fontname": resolved,
-                    }
-                    if font_file:
-                        kw["fontfile"] = font_file
-                    new_page.insert_text(**kw)
+                    font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
+                    tw = font_obj.text_length(text, fontsize=block_font_size)
+
+                    if tw <= bbox[2] - bbox[0]:
+                        new_page.insert_text((bbox[0], y_pos), text, fontsize=block_font_size, color=color, fontname=resolved, fontfile=font_file)
+                    else:
+                        wrapped = _wrap_text(text, font_obj, bbox[2] - bbox[0], block_font_size)
+                        line_height = block_font_size * 1.2
+                        y = y_pos
+                        for wl in wrapped:
+                            new_page.insert_text((bbox[0], y), wl, fontsize=block_font_size, color=color, fontname=resolved, fontfile=font_file)
+                            y += line_height
 
         src_doc.close()
         out_doc.save(output_path, garbage=4, deflate=True)
