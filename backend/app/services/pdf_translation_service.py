@@ -278,34 +278,44 @@ class LayoutRebuilder:
             new_page = out_doc[-1]
 
             for block in page_data["text_blocks"]:
+                block_font_size = None
                 for line in block["lines"]:
                     text = line["text"]
                     if not text.strip():
                         continue
-
                     span = line["spans"][0] if line["spans"] else {}
-                    original_font_name = span.get("font", "helv")
                     original_size = span.get("size", 10)
-                    original_color = span.get("color", 0)
-
-                    resolved = _resolve_font(original_font_name)
                     bbox = line["bbox"]
                     block_width = bbox[2] - bbox[0]
-                    line_x = bbox[0]
+                    resolved = _resolve_font(span.get("font", "helv"))
 
                     tw = fitz.Font(fontname=resolved, fontfile=font_file).text_length(text, fontsize=original_size) if font_file else fitz.Font(fontname=resolved).text_length(text, fontsize=original_size)
 
-                    adjusted_size = original_size
-                    if tw > block_width * 0.95 and adjusted_size > 4:
-                        adjusted_size = original_size * (block_width * 0.9 / tw)
+                    line_size = original_size
+                    if tw > block_width * 0.95 and line_size > 4:
+                        line_size = original_size * (block_width * 0.9 / tw)
+                    if block_font_size is None or line_size < block_font_size:
+                        block_font_size = line_size
 
+                if block_font_size is None:
+                    block_font_size = 10
+
+                for line in block["lines"]:
+                    text = line["text"]
+                    if not text.strip():
+                        continue
+                    span = line["spans"][0] if line["spans"] else {}
+                    original_font_name = span.get("font", "helv")
+                    original_color = span.get("color", 0)
+                    resolved = _resolve_font(original_font_name)
+                    bbox = line["bbox"]
                     color = _int_to_rgb(original_color)
                     y_pos = bbox[3] - 1
 
                     kw = {
-                        "point": (line_x, y_pos),
+                        "point": (bbox[0], y_pos),
                         "text": text,
-                        "fontsize": max(adjusted_size, 4),
+                        "fontsize": max(block_font_size, 4),
                         "color": color,
                         "fontname": resolved,
                     }
