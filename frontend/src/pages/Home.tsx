@@ -322,6 +322,8 @@ export default function HomePage() {
             <footer className="mt-auto py-8 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-border-dark">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center gap-4">
                 <span>&copy; 2026 DocAI. All rights reserved.</span>
+                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <span>Created by <a href="mailto:lokmankai.lonas@gmail.com" className="hover:text-pdf-600 transition-colors">Lounes Lokmane</a></span>
                 <span className="text-gray-300">|</span>
                 <Link to="/login" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Sign In</Link>
                 <span className="text-gray-300 dark:text-gray-600">|</span>
