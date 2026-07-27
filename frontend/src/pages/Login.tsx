@@ -31,7 +31,7 @@ export default function Login() {
           <h1 className="text-2xl font-bold text-gray-900">AI Document Assistant</h1>
           <p className="text-gray-500 mt-1">Sign in to your account</p>
         </div>
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-surface-card-dark p-8 rounded-xl shadow-sm border border-gray-200 dark:border-border-dark space-y-4">
           {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">{error}</div>}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>

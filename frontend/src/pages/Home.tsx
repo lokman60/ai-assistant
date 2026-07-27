@@ -148,7 +148,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-100/80">
+      <header className="sticky top-0 z-50 bg-white/70 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100/80 dark:border-border-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pdf-500 to-pdf-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
@@ -204,7 +204,7 @@ export default function HomePage() {
                   {FEATURES.map((feature, i) => {
                     const Icon = feature.icon
                     return (
-                      <div key={i} className="group bg-white/70 backdrop-blur rounded-xl border border-gray-100 p-4 text-left hover:border-pdf-100 hover:shadow-sm transition-all animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                      <div key={i} className="group bg-white/70 dark:bg-gray-900/50 backdrop-blur rounded-xl border border-gray-100 dark:border-border-dark p-4 text-left hover:border-pdf-100 dark:hover:border-pdf-800 hover:shadow-sm transition-all animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
                         <div className="w-8 h-8 rounded-lg bg-pdf-50 flex items-center justify-center mb-2.5 group-hover:bg-pdf-100 transition-colors">
                           <Icon className="w-4 h-4 text-pdf-600" />
                         </div>
@@ -225,8 +225,8 @@ export default function HomePage() {
                     Chat
                   </button>
                   <Link
-                    to="/app/translate"
-                    className="px-5 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-white/70 hover:bg-white border border-border rounded-xl transition-all"
+                    to="/translate"
+                    className="px-5 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-white/70 dark:bg-gray-900/50 hover:bg-white dark:hover:bg-gray-800 border border-border rounded-xl transition-all"
                   >
                     <Globe className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
                     Translate
@@ -315,7 +315,7 @@ export default function HomePage() {
                   <FileText className="w-4 h-4 text-pdf-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 dark:text-gray-100 truncate">{filename}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{filename}</p>
                   <p className="text-xs text-gray-400">Ready to answer your questions</p>
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function HomePage() {
                         <button
                           key={i}
                           onClick={() => { setQuestion(suggestion); if (inputRef.current) inputRef.current.focus() }}
-                          className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 hover:text-gray-700 dark:text-gray-300 transition-all"
+                          className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-border-dark rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
                         >
                           {suggestion}
                         </button>
@@ -373,7 +373,7 @@ export default function HomePage() {
                           </div>
                         )}
                         <div className={`${isFirst ? '' : 'ml-10'}`}>
-                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark text-gray-900 dark:text-gray-100 dark:text-gray-100 shadow-sm'}`}>
+                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark text-gray-900 dark:text-gray-100 shadow-sm'}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           </div>
                           {isFirst && (
@@ -391,7 +391,7 @@ export default function HomePage() {
                   <div className="flex justify-start animate-fade-in">
                     <div className="flex items-start gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5">AI</div>
-                      <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm">
+                      <div className="bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark rounded-2xl px-4 py-3 shadow-sm">
                         <div className="flex gap-1.5">
                           <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                           <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -414,7 +414,7 @@ export default function HomePage() {
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex-shrink-0">Sources:</span>
                   <div className="flex gap-1.5">
                     {sources.map((s, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-200 rounded-md text-[10px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white dark:bg-surface-card-dark border border-gray-200 dark:border-border-dark rounded-md text-[10px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         {s.filename} <span className="text-gray-300">·</span> p.{s.page_number}
                       </span>
                     ))}
@@ -439,7 +439,7 @@ export default function HomePage() {
                       <ChevronDown className={`w-3 h-3 transition-transform ${showActions ? 'rotate-180' : ''}`} />
                     </button>
                     {showActions && (
-                      <div className="absolute bottom-full mb-1.5 left-0 bg-white border border-gray-100 rounded-xl shadow-lg shadow-gray-200/50 z-10 w-44 py-1 animate-scale-in">
+                      <div className="absolute bottom-full mb-1.5 left-0 bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-lg shadow-gray-200/50 dark:shadow-black/20 z-10 w-44 py-1 animate-scale-in">
                         <div className="px-3 py-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Action Mode</div>
                         {ACTIONS.map(a => {
                           const Icon = a.icon

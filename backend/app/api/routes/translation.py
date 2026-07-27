@@ -32,14 +32,6 @@ def translate_pdf(
     if not file.filename.lower().endswith(".pdf"):
         return ErrorResponse(message="Only PDF files are supported")
 
-    if not user_id:
-        return {
-            "success": False,
-            "error": "plan_limit",
-            "message": "Sign up to translate PDFs — it's free!",
-            "data": {"feature": "pdf_translation", "limit": 1, "pages": 0},
-        }
-
     os.makedirs(settings.upload_dir, exist_ok=True)
     temp_path = os.path.join(settings.upload_dir, f"translate_{file.filename}")
     content = file.file.read()
@@ -50,14 +42,15 @@ def translate_pdf(
     page_count = len(doc)
     doc.close()
 
-    sub_svc = SubscriptionService(db)
-    user = sub_svc.get_user(user_id)
-    if not user:
-        return ErrorResponse(message="User not found")
-
-    allowed, msg = sub_svc.check_page_limit(user, "pdf_translation", page_count)
-    if not allowed:
-        return {"success": False, "error": "plan_limit", "message": msg, "data": {"feature": "pdf_translation", "limit": 1, "pages": page_count}}
+    if user_id:
+        sub_svc = SubscriptionService(db)
+        user = sub_svc.get_user(user_id)
+        if user and user.plan == "pro":
+            pass
+        elif page_count > 1:
+            return {"success": False, "error": "plan_limit", "message": f"PDF Translation is limited to 1 page per document on the Free plan. Upgrade to Pro to translate entire documents.", "data": {"feature": "pdf_translation", "limit": 1, "pages": page_count}}
+    elif page_count > 1:
+        return {"success": False, "error": "plan_limit", "message": f"PDF Translation is limited to 1 page per document. Sign up for free to get started.", "data": {"feature": "pdf_translation", "limit": 1, "pages": page_count}}
 
     try:
         job_id = svc.start(temp_path, target_language)

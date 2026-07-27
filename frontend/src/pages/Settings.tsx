@@ -6,7 +6,7 @@ export default function Settings() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 max-w-lg">
+      <div className="bg-white dark:bg-surface-card-dark rounded-xl border border-gray-200 dark:border-border-dark shadow-sm p-6 max-w-lg">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
         <div className="space-y-4">
           <div>
