@@ -7,6 +7,7 @@ class DocumentResponse(BaseModel):
     id: str
     filename: str
     title: str
+    page_count: int
     status: str
     created_at: datetime
 

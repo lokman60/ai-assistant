@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { ThemeProvider } from './hooks/useTheme'
+import { usePlanLimit } from './hooks/usePlanLimit'
 import Layout from './components/Layout'
+import UpgradeDialog from './components/UpgradeDialog'
 import HomePage from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -23,21 +25,32 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  const { limitData, dismiss } = usePlanLimit()
+
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/home" element={<HomePage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<Navigate to="/app/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="upload" element={<UploadPage />} />
-        <Route path="chat" element={<ChatPage />} />
-        <Route path="translate" element={<TranslatePage />} />
-        <Route path="settings" element={<Settings />} />
-      </Route>
-    </Routes>
+    <>
+      <UpgradeDialog
+        open={!!limitData}
+        onClose={dismiss}
+        feature={limitData?.feature}
+        limit={limitData?.limit}
+        pages={limitData?.pages}
+      />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="upload" element={<UploadPage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="translate" element={<TranslatePage />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+      </Routes>
+    </>
   )
 }
 

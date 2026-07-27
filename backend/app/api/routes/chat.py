@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user_id
 from app.core.database import get_db
+from app.models.document import Document
 from app.repositories.conversation_repo import ConversationRepository
 from app.schemas.chat import ChatRequest, ConversationRename
 from app.schemas.common import ErrorResponse
 from app.services.rag_service import RagService
+from app.services.subscription_service import SubscriptionService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -16,6 +18,27 @@ router = APIRouter(prefix="/api", tags=["chat"])
 
 @router.post("/chat")
 def chat(body: ChatRequest, user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    if not body.document_ids:
+        return ErrorResponse(message="No documents selected")
+
+    docs = db.query(Document).filter(Document.id.in_(body.document_ids), Document.user_id == user_id).all()
+    if not docs:
+        return ErrorResponse(message="Documents not found")
+
+    max_pages = max(d.page_count for d in docs)
+
+    action = body.action or "qna"
+    feature_map = {"qna": "chat", "summarize": "summarization", "draft": "chat"}
+    feature = feature_map.get(action, "chat")
+
+    sub_svc = SubscriptionService(db)
+    user = sub_svc.get_user(user_id)
+    if user:
+        allowed, msg = sub_svc.check_page_limit(user, feature, max_pages)
+        if not allowed:
+            limits = {"chat": 200, "summarization": 200}
+            return {"success": False, "error": "plan_limit", "message": msg, "data": {"feature": feature, "limit": limits.get(feature, 200), "pages": max_pages}}
+
     svc = RagService(db)
     try:
         result = svc.ask(user_id, body.question, body.document_ids, body.conversation_id, body.action)

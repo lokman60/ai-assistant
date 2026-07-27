@@ -20,16 +20,20 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
+    const data = err.response?.data || err.response || {}
+    if (data?.error === 'plan_limit') {
+      window.dispatchEvent(new CustomEvent('plan-limit', { detail: data }))
+    }
     const original = err.config
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true
       const refresh = localStorage.getItem('refresh_token')
       if (refresh) {
         try {
-          const { data } = await axios.post('/api/refresh', { refresh_token: refresh })
-          localStorage.setItem('access_token', data.data.access_token)
-          localStorage.setItem('refresh_token', data.data.refresh_token)
-          original.headers.Authorization = `Bearer ${data.data.access_token}`
+          const { data: refreshData } = await axios.post('/api/refresh', { refresh_token: refresh })
+          localStorage.setItem('access_token', refreshData.data.access_token)
+          localStorage.setItem('refresh_token', refreshData.data.refresh_token)
+          original.headers.Authorization = `Bearer ${refreshData.data.access_token}`
           return api(original)
         } catch {
           localStorage.clear()

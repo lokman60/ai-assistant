@@ -13,6 +13,7 @@ from app.models.chunk import Chunk
 from app.models.document import Document
 from app.repositories.document_repo import DocumentRepository
 from app.services.embedding_service import generate_embeddings_batch
+from app.services.subscription_service import SubscriptionService
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,13 @@ def _extract_text_pages(filepath: str) -> list[tuple[int, str]]:
             pages.append((page_num + 1, text))
     doc.close()
     return pages
+
+
+def _count_pages(filepath: str) -> int:
+    doc = fitz.open(filepath)
+    count = len(doc)
+    doc.close()
+    return count
 
 
 def _chunk_text(text: str, page_number: int, chunk_size: int = 500, overlap: int = 100) -> list[dict]:
@@ -52,6 +60,15 @@ class DocumentService:
         if ext not in settings.allowed_extensions:
             raise ValueError(f"Unsupported file type: {ext}")
 
+        sub_svc = SubscriptionService(self._db)
+        user = sub_svc.get_user(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        allowed, msg = sub_svc.check_document_upload_allowed(user)
+        if not allowed:
+            raise ValueError(msg)
+
         filename = file.filename
         doc_id = str(uuid.uuid4())
         save_path = os.path.join(settings.upload_dir, f"{doc_id}_{filename}")
@@ -61,8 +78,13 @@ class DocumentService:
         with open(save_path, "wb") as f:
             f.write(content)
 
-        doc = Document(id=doc_id, user_id=user_id, filename=filename, title=Path(filename).stem, status="processing")
+        page_count = _count_pages(save_path)
+        doc = Document(
+            id=doc_id, user_id=user_id, filename=filename,
+            title=Path(filename).stem, page_count=page_count, status="processing",
+        )
         doc = self._repo.create(doc)
+        sub_svc.increment_document_upload(user)
 
         try:
             pages = _extract_text_pages(save_path)
@@ -90,7 +112,7 @@ class DocumentService:
 
             doc.status = "ready"
             self._db.commit()
-            logger.info("Document %s processed successfully with %d chunks", doc.id, len(all_chunks))
+            logger.info("Document %s processed successfully with %d pages, %d chunks", doc.id, page_count, len(all_chunks))
         except Exception as e:
             doc.status = "error"
             self._db.commit()

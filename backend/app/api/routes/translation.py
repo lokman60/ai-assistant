@@ -3,11 +3,16 @@ from __future__ import annotations
 import logging
 import os
 
-from fastapi import APIRouter, File, Form, UploadFile
+import fitz
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user_id
 from app.core.config import settings
+from app.core.database import get_db
 from app.schemas.common import ErrorResponse
+from app.services.subscription_service import SubscriptionService
 from app.services.pdf_translation_service import PDFTranslationService, cleanup_old_jobs
 
 logger = logging.getLogger(__name__)
@@ -17,7 +22,12 @@ svc = PDFTranslationService()
 
 
 @router.post("/translate-pdf")
-def translate_pdf(file: UploadFile = File(...), target_language: str = Form(...)):
+def translate_pdf(
+    file: UploadFile = File(...),
+    target_language: str = Form(...),
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
     if not file.filename.lower().endswith(".pdf"):
         return ErrorResponse(message="Only PDF files are supported")
 
@@ -26,6 +36,19 @@ def translate_pdf(file: UploadFile = File(...), target_language: str = Form(...)
     content = file.file.read()
     with open(temp_path, "wb") as f:
         f.write(content)
+
+    doc = fitz.open(temp_path)
+    page_count = len(doc)
+    doc.close()
+
+    sub_svc = SubscriptionService(db)
+    user = sub_svc.get_user(user_id)
+    if not user:
+        return ErrorResponse(message="User not found")
+
+    allowed, msg = sub_svc.check_page_limit(user, "pdf_translation", page_count)
+    if not allowed:
+        return {"success": False, "error": "plan_limit", "message": msg, "data": {"feature": "pdf_translation", "limit": 1, "pages": page_count}}
 
     try:
         job_id = svc.start(temp_path, target_language)
