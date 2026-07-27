@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 
+from alembic.config import Config
+from alembic import command
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -15,10 +17,18 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title=settings.app_name, version="1.0.0")
 
 Base.metadata.create_all(bind=engine)
+
+alembic_cfg = Config(Path(__file__).resolve().parent.parent.parent / "alembic.ini")
+try:
+    command.upgrade(alembic_cfg, "head")
+    logger.info("Alembic migrations applied successfully")
+except Exception as e:
+    logger.warning("Alembic migration failed (tables may already be up to date): %s", e)
 
 app.add_middleware(
     CORSMiddleware,

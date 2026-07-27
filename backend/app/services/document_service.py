@@ -105,10 +105,13 @@ class DocumentService:
 
             self._db.commit()
 
-            embeddings = generate_embeddings_batch(all_texts)
-            for chunk, emb in zip(all_chunks, embeddings):
-                chunk.embedding = json.dumps(emb)
-            self._db.commit()
+            try:
+                embeddings = generate_embeddings_batch(all_texts)
+                for chunk, emb in zip(all_chunks, embeddings):
+                    chunk.embedding = json.dumps(emb)
+                self._db.commit()
+            except Exception as e:
+                logger.warning("Embeddings failed for document %s: %s (document still usable)", doc.id, str(e))
 
             doc.status = "ready"
             self._db.commit()
@@ -117,7 +120,6 @@ class DocumentService:
             doc.status = "error"
             self._db.commit()
             logger.error("Failed to process document %s: %s", doc.id, str(e))
-            raise
 
         return doc
 

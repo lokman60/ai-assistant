@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Upload, Send, FileText, MessageSquare, ChevronDown, LogIn, X, Sparkles, Shield, Zap, CheckCircle, ArrowRight, Globe } from 'lucide-react'
+import UpgradeDialog from '../components/UpgradeDialog'
 import axios from 'axios'
 
 interface Source { filename: string; page_number: number }
@@ -36,6 +37,7 @@ export default function HomePage() {
   const [showActions, setShowActions] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showUpgrade, setShowUpgrade] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEnd = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -157,9 +159,14 @@ export default function HomePage() {
             <span className="text-lg font-bold text-gray-900 dark:text-gray-100 tracking-tight">DocAI</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
+            <button onClick={() => setShowUpgrade(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-ai-600 dark:text-ai-400 hover:text-white border border-ai-200 dark:border-ai-800 rounded-lg hover:bg-ai-600 dark:hover:bg-ai-700 transition-all"
+            >
+              <Sparkles className="w-4 h-4" /> Pro
+            </button>
             <Link
               to="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 hover:bg-gray-100 rounded-lg transition-all"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
             >
               <LogIn className="w-4 h-4" /> Sign In
             </Link>
@@ -204,7 +211,7 @@ export default function HomePage() {
                   {FEATURES.map((feature, i) => {
                     const Icon = feature.icon
                     return (
-                      <div key={i} className="group bg-white/70 dark:bg-gray-900/50 backdrop-blur rounded-xl border border-gray-100 dark:border-border-dark p-4 text-left hover:border-pdf-100 dark:hover:border-pdf-800 hover:shadow-sm transition-all animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                      <div key={i} className="group bg-white/70 dark:bg-gray-900/50 backdrop-blur rounded-xl border border-gray-200 dark:border-border-dark p-4 text-left hover:border-pdf-300 dark:hover:border-pdf-800 hover:shadow-sm transition-all animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
                         <div className="w-8 h-8 rounded-lg bg-pdf-50 flex items-center justify-center mb-2.5 group-hover:bg-pdf-100 transition-colors">
                           <Icon className="w-4 h-4 text-pdf-600" />
                         </div>
@@ -261,7 +268,7 @@ export default function HomePage() {
                         </div>
                         <div className="text-center">
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing your document...</p>
-                          <p className="text-xs text-gray-400 mt-0.5">Analyzing and indexing content</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Analyzing and indexing content</p>
                         </div>
                         <div className="w-full max-w-[200px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div className="h-full bg-gradient-to-r from-pdf-500 to-pdf-400 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
@@ -276,7 +283,7 @@ export default function HomePage() {
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {dragOver ? 'Drop your file here' : 'Drop your PDF here, or click to browse'}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">PDF up to 50MB — processed in memory, nothing stored permanently</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">PDF up to 50MB — processed in memory, nothing stored permanently</p>
                         </div>
                       </div>
                     )}
@@ -295,28 +302,44 @@ export default function HomePage() {
               </div>
             </section>
 
+            {/* Pro Teaser */}
+            <div className="max-w-lg mx-auto w-full px-4 sm:px-6 mt-8">
+              <div className="bg-gradient-to-r from-ai-50 to-pdf-50 dark:from-ai-900/20 dark:to-pdf-900/20 rounded-2xl border border-ai-200/50 dark:border-ai-800/30 p-6 text-center">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-gray-800 rounded-full text-xs font-semibold text-ai-600 dark:text-ai-400 shadow-sm mb-3">
+                  <Sparkles className="w-3 h-3" /> Pro Plan
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Unlock the full potential</h3>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1.5">
+                  <li>Unlimited pages & documents</li>
+                  <li>Translate entire PDFs</li>
+                  <li>OCR for scanned PDFs</li>
+                  <li>Priority processing</li>
+                </ul>
+              </div>
+            </div>
+
             {/* Footer */}
-            <footer className="mt-auto py-8 text-center text-xs text-gray-400 border-t border-gray-100">
+            <footer className="mt-auto py-8 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-border-dark">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center gap-4">
                 <span>&copy; 2026 DocAI. All rights reserved.</span>
                 <span className="text-gray-300">|</span>
-                <Link to="/login" className="hover:text-gray-600 dark:text-gray-400 transition-colors">Sign In</Link>
-                <span className="text-gray-300">|</span>
-                <Link to="/register" className="hover:text-gray-600 dark:text-gray-400 transition-colors">Create Account</Link>
+                <Link to="/login" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Sign In</Link>
+                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <Link to="/register" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Create Account</Link>
               </div>
             </footer>
           </>
         ) : (
           <div className="flex-1 flex flex-col h-[calc(100vh-4rem)]">
             {/* Chat Toolbar */}
-            <div className="bg-white dark:bg-surface-card-dark border-b border-gray-100 dark:border-border-dark/80 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="bg-white dark:bg-surface-card-dark border-b border-gray-200 dark:border-border-dark/80 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-pdf-50 flex items-center justify-center flex-shrink-0">
                   <FileText className="w-4 h-4 text-pdf-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{filename}</p>
-                  <p className="text-xs text-gray-400">Ready to answer your questions</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Ready to answer your questions</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -344,7 +367,7 @@ export default function HomePage() {
                       <MessageSquare className="w-7 h-7 text-pdf-500" />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Ask anything about your document</h3>
-                    <p className="text-sm text-gray-400 max-w-sm">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
                       Try asking a question, requesting a summary, or extracting key information
                     </p>
                     <div className="flex flex-wrap gap-2 mt-6 justify-center">
@@ -373,11 +396,11 @@ export default function HomePage() {
                           </div>
                         )}
                         <div className={`${isFirst ? '' : 'ml-10'}`}>
-                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark text-gray-900 dark:text-gray-100 shadow-sm'}`}>
+                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-white dark:bg-surface-card-dark border border-gray-200 dark:border-border-dark text-gray-900 dark:text-gray-100 shadow-sm'}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           </div>
                           {isFirst && (
-                            <p className={`text-[10px] text-gray-400 mt-1 ${isUser ? 'text-right mr-1' : 'ml-1'}`}>
+                            <p className={`text-[10px] text-gray-500 dark:text-gray-400 mt-1 ${isUser ? 'text-right mr-1' : 'ml-1'}`}>
                               {formatTime(msg.timestamp)}
                             </p>
                           )}
@@ -391,7 +414,7 @@ export default function HomePage() {
                   <div className="flex justify-start animate-fade-in">
                     <div className="flex items-start gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5">AI</div>
-                      <div className="bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark rounded-2xl px-4 py-3 shadow-sm">
+                      <div className="bg-white dark:bg-surface-card-dark border border-gray-200 dark:border-border-dark rounded-2xl px-4 py-3 shadow-sm">
                         <div className="flex gap-1.5">
                           <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                           <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -408,7 +431,7 @@ export default function HomePage() {
 
             {/* Sources Bar */}
             {sources.length > 0 && (
-              <div className="border-t border-gray-100 bg-gray-50/80 px-4 sm:px-6 lg:px-8 py-2.5 flex-shrink-0">
+              <div className="border-t border-gray-200 dark:border-border-dark bg-gray-50/80 dark:bg-gray-900/50 px-4 sm:px-6 lg:px-8 py-2.5 flex-shrink-0">
                 <div className="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto">
                   <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex-shrink-0">Sources:</span>
@@ -424,7 +447,7 @@ export default function HomePage() {
             )}
 
             {/* Input Area */}
-            <div className="border-t border-gray-100 dark:border-border-dark bg-white dark:bg-surface-card-dark px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
+            <div className="border-t border-gray-200 dark:border-border-dark bg-white dark:bg-surface-card-dark px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
               <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-2.5 mb-2">
                   {/* Action Mode Selector */}
@@ -439,8 +462,8 @@ export default function HomePage() {
                       <ChevronDown className={`w-3 h-3 transition-transform ${showActions ? 'rotate-180' : ''}`} />
                     </button>
                     {showActions && (
-                      <div className="absolute bottom-full mb-1.5 left-0 bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark rounded-xl shadow-lg shadow-gray-200/50 dark:shadow-black/20 z-10 w-44 py-1 animate-scale-in">
-                        <div className="px-3 py-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-wider">Action Mode</div>
+                      <div className="absolute bottom-full mb-1.5 left-0 bg-white dark:bg-surface-card-dark border border-gray-200 dark:border-border-dark rounded-xl shadow-lg shadow-gray-200/50 dark:shadow-black/20 z-10 w-44 py-1 animate-scale-in">
+                        <div className="px-3 py-1.5 text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action Mode</div>
                         {ACTIONS.map(a => {
                           const Icon = a.icon
                           return (
@@ -459,7 +482,7 @@ export default function HomePage() {
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] text-gray-400 hidden sm:inline">
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 hidden sm:inline">
                     {currentAction && ACTIONS.find(a => a.value === action)?.label !== 'Q&A' ? 'Mode: ' + currentAction?.label : 'Ask questions about your document'}
                   </span>
                 </div>
@@ -472,7 +495,7 @@ export default function HomePage() {
                       onChange={e => setQuestion(e.target.value)}
                       placeholder="Type your question or request..."
                       disabled={loading}
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-pdf-500/20 focus:border-pdf-400 outline-none transition-all disabled:opacity-50"
+                      className="w-full px-4 py-2.5 bg-white dark:bg-surface-card-dark border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-pdf-500/20 focus:border-pdf-400 outline-none transition-all disabled:opacity-50"
                     />
                   </div>
                   <button
@@ -489,6 +512,8 @@ export default function HomePage() {
           </div>
         )}
       </main>
+
+      <UpgradeDialog open={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </div>
   )
 }

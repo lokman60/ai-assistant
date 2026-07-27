@@ -68,12 +68,16 @@ export default function Layout() {
               <p className="text-xs text-ai-600/70 dark:text-ai-400/70 mt-0.5">Unlimited Access</p>
             </div>
           ) : (
-            <div className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl border border-border dark:border-border-dark">
+            <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-border-dark">
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-text-secondary" />
-                <span className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">Free Plan</span>
+                <Zap className="w-4 h-4 text-gray-500 dark:text-text-secondary" />
+                <span className="text-sm font-semibold text-gray-900 dark:text-text-primary-dark">Free Plan</span>
               </div>
-              <p className="text-xs text-text-secondary mt-0.5">Limited — upgrade anytime</p>
+              <p className="text-xs text-gray-500 dark:text-text-secondary mt-0.5">Limited — upgrade anytime</p>
+              <button onClick={() => setShowUpgrade(true)}
+                className="mt-2.5 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-ai-600 to-pdf-600 rounded-lg hover:from-ai-700 hover:to-pdf-700 transition-all">
+                <Sparkles className="w-3.5 h-3.5" /> Upgrade to Pro
+              </button>
             </div>
           )}
         </div>

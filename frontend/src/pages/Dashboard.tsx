@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { FileText, Upload, MessageSquare, Files, Zap } from 'lucide-react'
+import { FileText, Upload, MessageSquare, Files, Zap, Sparkles } from 'lucide-react'
 import { documents as docsApi, chat as chatApi, subscription as subApi } from '../services/api'
 
 export default function Dashboard() {
@@ -46,7 +46,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
+        <div className="bg-white dark:bg-surface-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
           <div className="flex items-center gap-3 mb-2">
             <Files className="w-8 h-8 text-pdf-600" />
             <div>
@@ -55,7 +55,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
+        <div className="bg-white dark:bg-surface-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
           <div className="flex items-center gap-3 mb-2">
             <MessageSquare className="w-8 h-8 text-green-600" />
             <div>
@@ -64,7 +64,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
+        <div className="bg-white dark:bg-surface-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
           <div className="flex items-center gap-3 mb-2">
             <FileText className="w-8 h-8 text-ai-600" />
             <div>
@@ -76,7 +76,7 @@ export default function Dashboard() {
           </div>
         </div>
         {plan && (
-          <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
+          <div className="bg-white dark:bg-surface-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
             <div className="flex items-center gap-3 mb-2">
               <Zap className={`w-8 h-8 ${plan.plan === 'pro' ? 'text-ai-600' : 'text-text-secondary'}`} />
               <div>
@@ -90,8 +90,27 @@ export default function Dashboard() {
         )}
       </div>
 
+      {plan && plan.plan === 'free' && (
+        <div className="mb-6 bg-gradient-to-r from-ai-50 to-pdf-50 dark:from-ai-900/20 dark:to-pdf-900/20 rounded-2xl border border-ai-200/50 dark:border-ai-800/30 p-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
+              <Sparkles className="w-5 h-5 text-ai-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">You're on the Free plan</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Upgrade to Pro for unlimited pages, OCR, and priority processing.</p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{plan.documents_today}/{plan.max_documents_per_day} uploads today</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
+        <div className="bg-white dark:bg-surface-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
           <h2 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-4">Recent Documents</h2>
           {docs.length === 0 ? (
             <p className="text-text-secondary text-sm">No documents yet. <Link to="../upload" className="text-pdf-600 hover:underline">Upload one</Link></p>
@@ -114,7 +133,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
+        <div className="bg-white dark:bg-surface-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
           <h2 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-4">Recent Conversations</h2>
           {convs.length === 0 ? (
             <p className="text-text-secondary text-sm">No conversations yet. <Link to="../chat" className="text-pdf-600 hover:underline">Start one</Link></p>

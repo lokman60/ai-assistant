@@ -21,6 +21,9 @@ def upload_document(file: UploadFile = File(...), user_id: str = Depends(get_cur
         return {"success": True, "message": "Document uploaded", "data": DocumentResponse.model_validate(doc).model_dump()}
     except ValueError as e:
         return ErrorResponse(message=str(e))
+    except Exception as e:
+        logger.exception("Upload failed unexpectedly")
+        return ErrorResponse(message="Upload failed. Please try again.")
 
 
 @router.get("/documents")

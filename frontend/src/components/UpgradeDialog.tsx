@@ -102,8 +102,8 @@ export default function UpgradeDialog({ open, onClose, feature, limit, pages }: 
             Maybe Later
           </button>
           <button
-            onClick={handleUpgrade}
-            className="flex-1 py-3 text-sm font-semibold text-white bg-gradient-to-r from-pdf-600 to-pdf-500 rounded-xl hover:from-pdf-700 hover:to-pdf-600 shadow-soft hover:shadow-premium transition-all duration-200 flex items-center justify-center gap-2"
+            disabled
+            className="flex-1 py-3 text-sm font-semibold text-white/60 bg-gradient-to-r from-gray-400 to-gray-400 rounded-xl cursor-not-allowed flex items-center justify-center gap-2"
           >
             Upgrade to Pro <ArrowRight className="w-4 h-4" />
           </button>

@@ -82,7 +82,7 @@ export default function TranslatePage() {
           <Globe className="w-6 h-6 text-ai-600" />
           Translate PDF
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Upload a PDF and translate it to another language while preserving the original layout</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Upload a PDF and translate it to another language while preserving the original layout</p>
       </div>
 
       {!file ? (
@@ -92,7 +92,7 @@ export default function TranslatePage() {
           onDragLeave={() => setDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all ${
-            dragOver ? 'border-ai-400 bg-ai-50/80' : 'border-gray-200 dark:border-border-dark hover:border-ai-300 hover:bg-gray-50 dark:bg-gray-900'
+            dragOver ? 'border-ai-400 bg-ai-50/80' : 'border-gray-200 dark:border-border-dark hover:border-ai-300 hover:bg-gray-50 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900'
           }`}
         >
           <input ref={fileInputRef} type="file" accept=".pdf" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
@@ -100,7 +100,7 @@ export default function TranslatePage() {
             <Upload className="w-6 h-6 text-ai-500" />
           </div>
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Drop your PDF here, or click to browse</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Preserves layout, images, and formatting</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Preserves layout, images, and formatting</p>
         </div>
       ) : (
         <div className="space-y-5">
@@ -110,9 +110,9 @@ export default function TranslatePage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
             </div>
-            <button onClick={reset} className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:text-red-400 transition-colors">Remove</button>
+            <button onClick={reset} className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">Remove</button>
           </div>
 
           <div>
@@ -121,7 +121,7 @@ export default function TranslatePage() {
               value={language}
               onChange={e => setLanguage(e.target.value)}
               disabled={!!job}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-ai-500/20 focus:border-ai-400 outline-none transition-all disabled:opacity-50"
+              className="w-full px-3 py-2.5 bg-white dark:bg-surface-card-dark border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-ai-500/20 focus:border-ai-400 outline-none transition-all disabled:opacity-50"
             >
               {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
@@ -144,7 +144,7 @@ export default function TranslatePage() {
                   <div className="mt-3 w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-ai-500 to-ai-400 rounded-full transition-all duration-500" style={{ width: `${job.progress}%` }} />
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{job.progress}%</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{job.progress}%</p>
                 </div>
               ) : job.status === 'completed' ? (
                 <div className="text-center">
@@ -161,7 +161,7 @@ export default function TranslatePage() {
                     </a>
                     <button
                       onClick={reset}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-border-dark rounded-lg hover:bg-gray-100 dark:bg-gray-800 transition-all"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-border-dark rounded-lg hover:bg-gray-100 dark:bg-gray-800 transition-all"
                     >
                       <ArrowLeft className="w-4 h-4" /> Translate Another
                     </button>
@@ -174,7 +174,7 @@ export default function TranslatePage() {
                   </div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Translation failed</p>
                   <p className="text-xs text-red-500 dark:text-red-400 mt-1">{job.error || job.message}</p>
-                  <button onClick={reset} className="mt-3 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-border-dark rounded-lg hover:bg-gray-100 dark:bg-gray-800 transition-all">
+                  <button onClick={reset} className="mt-3 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-border-dark rounded-lg hover:bg-gray-100 dark:bg-gray-800 transition-all">
                     Try Again
                   </button>
                 </div>
