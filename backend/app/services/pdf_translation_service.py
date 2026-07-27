@@ -289,10 +289,43 @@ class TranslationService:
         }
 
 
+def _merge_into_paragraphs(blocks: list[dict]) -> list[dict]:
+    if not blocks:
+        return []
+    paragraphs = []
+    current = None
+    for block in blocks:
+        if not block["lines"]:
+            continue
+        if current is None:
+            current = {"bbox": list(block["bbox"]), "lines": [*block["lines"]]}
+            continue
+        last_line = current["lines"][-1]
+        first_line = block["lines"][0]
+        gap = first_line["bbox"][1] - last_line["bbox"][3]
+        last_span = last_line["spans"][0] if last_line["spans"] else {}
+        first_span = first_line["spans"][0] if first_line["spans"] else {}
+        last_size = last_span.get("size", 10)
+        first_size = first_span.get("size", 10)
+        line_height = last_line["bbox"][3] - last_line["bbox"][1]
+        if abs(last_size - first_size) < 2 and gap < line_height * 1.5 and abs(current["bbox"][0] - block["bbox"][0]) < 5:
+            current["bbox"][0] = min(current["bbox"][0], block["bbox"][0])
+            current["bbox"][1] = min(current["bbox"][1], block["bbox"][1])
+            current["bbox"][2] = max(current["bbox"][2], block["bbox"][2])
+            current["bbox"][3] = max(current["bbox"][3], block["bbox"][3])
+            current["lines"].extend(block["lines"])
+        else:
+            paragraphs.append(current)
+            current = {"bbox": list(block["bbox"]), "lines": [*block["lines"]]}
+    if current:
+        paragraphs.append(current)
+    return paragraphs
+
+
 class LayoutRebuilder:
     def __init__(self, output_dir: str):
         self._output_dir = output_dir
-        _ensure_font()  # try background download, non-fatal if it fails
+        _ensure_font()
 
     def rebuild(self, pages_data: list[dict], original_pdf: str) -> str:
         job_id = str(uuid.uuid4())
@@ -317,75 +350,61 @@ class LayoutRebuilder:
             out_doc.insert_pdf(src_doc, from_page=page_data["page_num"] - 1, to_page=page_data["page_num"] - 1)
             new_page = out_doc[-1]
 
-            blocks = page_data["text_blocks"]
-            block_font_sizes = []
+            paragraphs = _merge_into_paragraphs(page_data["text_blocks"])
 
-            for block in blocks:
-                line_sizes = []
-                for line in block["lines"]:
-                    text = line["text"]
-                    if not text.strip():
-                        line_sizes.append(None)
-                        continue
-                    span = line["spans"][0] if line["spans"] else {}
-                    original_size = span.get("size", 10)
-                    bbox = line["bbox"]
-                    block_width = bbox[2] - bbox[0]
-                    flags = span.get("flags", 0)
-                    resolved = _resolve_font(span.get("font", "helv"), flags)
+            for para in paragraphs:
+                if not para["lines"]:
+                    continue
 
-                    font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
-                    tw = font_obj.text_length(text, fontsize=original_size)
+                lines = para["lines"]
+                para_bbox = para["bbox"]
+                para_width = para_bbox[2] - para_bbox[0]
+                para_x = para_bbox[0]
 
-                    if tw <= block_width * 0.95:
-                        line_sizes.append(original_size)
-                    else:
-                        wrapped = _wrap_text(text, font_obj, block_width * 0.95, original_size)
-                        max_wl_width = max(font_obj.text_length(wl, fontsize=original_size) for wl in wrapped)
-                        if max_wl_width <= block_width * 0.95:
-                            line_sizes.append(original_size)
-                        else:
-                            ratio = block_width * 0.9 / max_wl_width
-                            line_sizes.append(max(original_size * ratio, original_size * 0.7))
+                first_span = lines[0]["spans"][0] if lines[0]["spans"] else {}
+                original_size = first_span.get("size", 10)
+                flags = first_span.get("flags", 0)
+                resolved = _resolve_font(first_span.get("font", "helv"), flags)
+                original_color = first_span.get("color", 0)
 
-                valid = [s for s in line_sizes if s is not None]
-                block_font_sizes.append(min(valid) if valid else 10)
+                full_text_parts = []
+                for li, line in enumerate(lines):
+                    t = line["text"].strip()
+                    if t:
+                        if full_text_parts and not t.startswith((".", ",", "!", "?", ":", ";", ")", "]", "}", "%")):
+                            full_text_parts.append(" ")
+                        full_text_parts.append(t)
 
-            for bi in range(1, len(blocks)):
-                prev_line = blocks[bi - 1]["lines"][0]["text"] if blocks[bi - 1]["lines"] else ""
-                curr_line = blocks[bi]["lines"][0]["text"] if blocks[bi]["lines"] else ""
-                if _is_bullet_line(prev_line) and _is_bullet_line(curr_line):
-                    shared = min(block_font_sizes[bi - 1], block_font_sizes[bi])
-                    block_font_sizes[bi - 1] = shared
-                    block_font_sizes[bi] = shared
+                full_text = "".join(full_text_parts)
+                if not full_text:
+                    continue
 
-            for bi, block in enumerate(blocks):
-                block_font_size = block_font_sizes[bi]
-                for line in block["lines"]:
-                    text = line["text"]
-                    if not text.strip():
-                        continue
-                    span = line["spans"][0] if line["spans"] else {}
-                    original_font_name = span.get("font", "helv")
-                    original_color = span.get("color", 0)
-                    flags = span.get("flags", 0)
-                    resolved = _resolve_font(original_font_name, flags)
-                    bbox = line["bbox"]
-                    color = _int_to_rgb(original_color)
-                    y_pos = bbox[3] - 1
+                font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
+                tw = font_obj.text_length(full_text, fontsize=original_size)
 
-                    font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
-                    tw = font_obj.text_length(text, fontsize=block_font_size)
+                used_size = original_size
+                if tw > para_width * 0.95:
+                    wrapped = _wrap_text(full_text, font_obj, para_width * 0.95, original_size)
+                    max_wl_width = max(font_obj.text_length(wl, fontsize=original_size) for wl in wrapped)
+                    if max_wl_width > para_width * 0.95 and used_size > 4:
+                        ratio = para_width * 0.9 / max_wl_width
+                        used_size = max(original_size * ratio, original_size * 0.7)
+                        font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
+                        wrapped = _wrap_text(full_text, font_obj, para_width * 0.95, used_size)
+                else:
+                    wrapped = [full_text]
 
-                    if tw <= bbox[2] - bbox[0]:
-                        new_page.insert_text((bbox[0], y_pos), text, fontsize=block_font_size, color=color, fontname=resolved, fontfile=font_file)
-                    else:
-                        wrapped = _wrap_text(text, font_obj, bbox[2] - bbox[0], block_font_size)
-                        line_height = block_font_size * 1.2
-                        y = y_pos
-                        for wl in wrapped:
-                            new_page.insert_text((bbox[0], y), wl, fontsize=block_font_size, color=color, fontname=resolved, fontfile=font_file)
-                            y += line_height
+                orig_line_height = (lines[-1]["bbox"][3] + lines[-1]["bbox"][1]) / 2 - (lines[0]["bbox"][3] + lines[0]["bbox"][1]) / 2
+                avg_line_height = orig_line_height / max(len(lines), 1)
+                if avg_line_height < used_size * 1.1:
+                    avg_line_height = used_size * 1.4
+
+                start_y = lines[0]["bbox"][3] - 1
+                color = _int_to_rgb(original_color)
+                y = start_y
+                for wl in wrapped:
+                    new_page.insert_text((para_x, y), wl, fontsize=used_size, color=color, fontname=resolved, fontfile=font_file)
+                    y += avg_line_height
 
         src_doc.close()
         out_doc.save(output_path, garbage=4, deflate=True)
