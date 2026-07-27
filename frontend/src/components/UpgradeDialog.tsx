@@ -62,13 +62,17 @@ export default function UpgradeDialog({ open, onClose, feature, limit, pages }: 
         </div>
 
         <h2 className="text-xl font-bold text-center text-text-primary dark:text-text-primary-dark mb-1">
-          Free Plan Limit Reached
+          {feature === 'pdf_translation' ? 'PDF Translation Available' : 'Free Plan Limit'}
         </h2>
 
         {feature && (
           <p className="text-sm text-text-secondary text-center mb-5">
-            <span className="text-pdf-600 font-medium">{label}</span> is limited to{' '}
-            <span className="font-semibold">{limit} {limit === 1 ? 'page' : 'pages'}</span> per document
+            <span className="text-pdf-600 font-medium">{label}</span> is{' '}
+            {feature === 'pdf_translation' ? (
+              <>available with a <span className="font-semibold">{limit}-page</span> limit per document</>
+            ) : (
+              <>limited to <span className="font-semibold">{limit} {limit === 1 ? 'page' : 'pages'}</span> per document</>
+            )}
             {pages && pages > (limit || 0) && (
               <span> — this document has <span className="font-semibold">{pages} pages</span></span>
             )}
@@ -76,7 +80,7 @@ export default function UpgradeDialog({ open, onClose, feature, limit, pages }: 
         )}
 
         <p className="text-sm text-text-secondary text-center mb-5 -mt-2">
-          Upgrade to <span className="font-semibold text-ai-600">Pro</span> to process unlimited pages, translate entire documents, and enjoy faster AI processing.
+          Upgrade to <span className="font-semibold text-ai-600">Pro</span> to remove all limits and unlock priority processing.
         </p>
 
         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 mb-6 space-y-3">

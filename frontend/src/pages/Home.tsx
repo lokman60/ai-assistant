@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Upload, Send, FileText, MessageSquare, ChevronDown, LogIn, X, Sparkles, Shield, Zap, CheckCircle, ArrowRight } from 'lucide-react'
+import { Upload, Send, FileText, MessageSquare, ChevronDown, LogIn, X, Sparkles, Shield, Zap, CheckCircle, ArrowRight, Globe } from 'lucide-react'
 import axios from 'axios'
 
 interface Source { filename: string; page_number: number }
@@ -154,12 +154,12 @@ export default function HomePage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pdf-500 to-pdf-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
               <FileText className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900 tracking-tight">DocAI</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-gray-100 tracking-tight">DocAI</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               to="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 hover:bg-gray-100 rounded-lg transition-all"
             >
               <LogIn className="w-4 h-4" /> Sign In
             </Link>
@@ -188,13 +188,13 @@ export default function HomePage() {
                   <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pdf-50 border border-pdf-100 rounded-full text-xs font-medium text-pdf-600 mb-6">
                     <Sparkles className="w-3.5 h-3.5" /> No sign-up required
                   </div>
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1]">
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-[1.1]">
                     Chat with your
                     <span className="block mt-1 bg-gradient-to-r from-pdf-600 via-ai-600 to-pdf-600 bg-clip-text text-transparent">
                       documents instantly
                     </span>
                   </h1>
-                  <p className="mt-5 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+                  <p className="mt-5 text-lg sm:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                     Upload a PDF and ask questions, summarize, rewrite, or extract information — all powered by AI, right in your browser.
                   </p>
                 </div>
@@ -208,15 +208,33 @@ export default function HomePage() {
                         <div className="w-8 h-8 rounded-lg bg-pdf-50 flex items-center justify-center mb-2.5 group-hover:bg-pdf-100 transition-colors">
                           <Icon className="w-4 h-4 text-pdf-600" />
                         </div>
-                        <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{feature.title}</h3>
-                        <p className="text-xs text-gray-500 leading-relaxed">{feature.desc}</p>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">{feature.title}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{feature.desc}</p>
                       </div>
                     )
                   })}
                 </div>
 
+                {/* Mode Toggle */}
+                <div className="mt-10 flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => {}}
+                    className="px-5 py-2 text-sm font-medium rounded-xl bg-pdf-600 text-white shadow-soft"
+                  >
+                    <MessageSquare className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
+                    Chat
+                  </button>
+                  <Link
+                    to="/app/translate"
+                    className="px-5 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-white/70 hover:bg-white border border-border rounded-xl transition-all"
+                  >
+                    <Globe className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
+                    Translate
+                  </Link>
+                </div>
+
                 {/* Dropzone */}
-                <div className="mt-10 max-w-lg mx-auto">
+                <div className="mt-6 max-w-lg mx-auto">
                   <div
                     onDrop={handleDrop}
                     onDragOver={e => { e.preventDefault(); setDragOver(true) }}
@@ -242,7 +260,7 @@ export default function HomePage() {
                           </svg>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm font-medium text-gray-700">Processing your document...</p>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing your document...</p>
                           <p className="text-xs text-gray-400 mt-0.5">Analyzing and indexing content</p>
                         </div>
                         <div className="w-full max-w-[200px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -255,7 +273,7 @@ export default function HomePage() {
                           <Upload className="w-6 h-6 text-pdf-500" />
                         </div>
                         <div className="text-center">
-                          <p className="text-sm font-medium text-gray-700">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {dragOver ? 'Drop your file here' : 'Drop your PDF here, or click to browse'}
                           </p>
                           <p className="text-xs text-gray-400 mt-1">PDF up to 50MB — processed in memory, nothing stored permanently</p>
@@ -282,29 +300,29 @@ export default function HomePage() {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center gap-4">
                 <span>&copy; 2026 DocAI. All rights reserved.</span>
                 <span className="text-gray-300">|</span>
-                <Link to="/login" className="hover:text-gray-600 transition-colors">Sign In</Link>
+                <Link to="/login" className="hover:text-gray-600 dark:text-gray-400 transition-colors">Sign In</Link>
                 <span className="text-gray-300">|</span>
-                <Link to="/register" className="hover:text-gray-600 transition-colors">Create Account</Link>
+                <Link to="/register" className="hover:text-gray-600 dark:text-gray-400 transition-colors">Create Account</Link>
               </div>
             </footer>
           </>
         ) : (
           <div className="flex-1 flex flex-col h-[calc(100vh-4rem)]">
             {/* Chat Toolbar */}
-            <div className="bg-white border-b border-gray-100/80 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="bg-white dark:bg-surface-card-dark border-b border-gray-100 dark:border-border-dark/80 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-pdf-50 flex items-center justify-center flex-shrink-0">
                   <FileText className="w-4 h-4 text-pdf-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{filename}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 dark:text-gray-100 truncate">{filename}</p>
                   <p className="text-xs text-gray-400">Ready to answer your questions</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={resetSession}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 rounded-lg transition-all"
                 >
                   <Upload className="w-3.5 h-3.5" /> New Document
                 </button>
@@ -325,7 +343,7 @@ export default function HomePage() {
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pdf-50 to-pdf-100 flex items-center justify-center mb-4">
                       <MessageSquare className="w-7 h-7 text-pdf-500" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Ask anything about your document</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Ask anything about your document</h3>
                     <p className="text-sm text-gray-400 max-w-sm">
                       Try asking a question, requesting a summary, or extracting key information
                     </p>
@@ -334,7 +352,7 @@ export default function HomePage() {
                         <button
                           key={i}
                           onClick={() => { setQuestion(suggestion); if (inputRef.current) inputRef.current.focus() }}
-                          className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 hover:text-gray-700 transition-all"
+                          className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 hover:text-gray-700 dark:text-gray-300 transition-all"
                         >
                           {suggestion}
                         </button>
@@ -350,12 +368,12 @@ export default function HomePage() {
                     <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${isFirst ? 'mt-2' : 'mt-0'} animate-slide-up`}>
                       <div className={`flex items-start gap-2.5 max-w-[85%] sm:max-w-[75%] ${isUser ? 'flex-row-reverse' : ''}`}>
                         {isFirst && (
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-gray-400'}`}>
                             {isUser ? 'U' : 'AI'}
                           </div>
                         )}
                         <div className={`${isFirst ? '' : 'ml-10'}`}>
-                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-white border border-gray-100 text-gray-900 shadow-sm'}`}>
+                          <div className={`rounded-2xl px-4 py-2.5 ${isUser ? 'bg-pdf-600 text-white' : 'bg-white dark:bg-surface-card-dark border border-gray-100 dark:border-border-dark text-gray-900 dark:text-gray-100 dark:text-gray-100 shadow-sm'}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           </div>
                           {isFirst && (
@@ -372,7 +390,7 @@ export default function HomePage() {
                 {loading && (
                   <div className="flex justify-start animate-fade-in">
                     <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0 mt-0.5">AI</div>
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5">AI</div>
                       <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm">
                         <div className="flex gap-1.5">
                           <div className="w-2 h-2 bg-pdf-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -393,10 +411,10 @@ export default function HomePage() {
               <div className="border-t border-gray-100 bg-gray-50/80 px-4 sm:px-6 lg:px-8 py-2.5 flex-shrink-0">
                 <div className="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto">
                   <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="text-xs font-medium text-gray-500 flex-shrink-0">Sources:</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex-shrink-0">Sources:</span>
                   <div className="flex gap-1.5">
                     {sources.map((s, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-200 rounded-md text-[10px] font-medium text-gray-500 whitespace-nowrap">
+                      <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-200 rounded-md text-[10px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         {s.filename} <span className="text-gray-300">·</span> p.{s.page_number}
                       </span>
                     ))}
@@ -406,7 +424,7 @@ export default function HomePage() {
             )}
 
             {/* Input Area */}
-            <div className="border-t border-gray-100 bg-white px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
+            <div className="border-t border-gray-100 dark:border-border-dark bg-white dark:bg-surface-card-dark px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
               <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-2.5 mb-2">
                   {/* Action Mode Selector */}
@@ -430,7 +448,7 @@ export default function HomePage() {
                               key={a.value}
                               type="button"
                               onClick={() => { setAction(a.value); setShowActions(false) }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${action === a.value ? 'bg-pdf-50 text-pdf-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${action === a.value ? 'bg-pdf-50 text-pdf-700 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50'}`}
                             >
                               <Icon className="w-3.5 h-3.5" />
                               {a.label}
@@ -454,7 +472,7 @@ export default function HomePage() {
                       onChange={e => setQuestion(e.target.value)}
                       placeholder="Type your question or request..."
                       disabled={loading}
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-pdf-500/20 focus:border-pdf-400 outline-none transition-all disabled:opacity-50"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-pdf-500/20 focus:border-pdf-400 outline-none transition-all disabled:opacity-50"
                     />
                   </div>
                   <button

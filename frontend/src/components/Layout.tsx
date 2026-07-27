@@ -10,7 +10,7 @@ const navItems = [
   { path: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard, premium: false },
   { path: '/app/upload', label: 'Upload', icon: Upload, premium: false },
   { path: '/app/chat', label: 'Chat', icon: MessageSquare, premium: false },
-  { path: '/app/translate', label: 'Translate', icon: Globe, premium: true },
+  { path: '/app/translate', label: 'Translate', icon: Globe, premium: false },
   { path: '/app/settings', label: 'Settings', icon: Settings, premium: false },
 ]
 
@@ -48,7 +48,7 @@ export default function Layout() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-card-dark border-r border-border dark:border-border-dark flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-surface-card-dark border-r border-border dark:border-border-dark flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="h-16 flex items-center gap-2.5 px-6 border-b border-border dark:border-border-dark">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pdf-600 to-pdf-500 flex items-center justify-center shadow-soft">
@@ -68,13 +68,13 @@ export default function Layout() {
               <p className="text-xs text-ai-600/70 dark:text-ai-400/70 mt-0.5">Unlimited Access</p>
             </div>
           ) : (
-            <button onClick={() => setShowUpgrade(true)} className="w-full px-4 py-2.5 bg-gradient-to-r from-pdf-600 to-pdf-500 rounded-xl hover:from-pdf-700 hover:to-pdf-600 shadow-soft hover:shadow-premium transition-all duration-200 text-left">
+            <div className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl border border-border dark:border-border-dark">
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-white" />
-                <span className="text-sm font-semibold text-white">Free Plan</span>
+                <Zap className="w-4 h-4 text-text-secondary" />
+                <span className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">Free Plan</span>
               </div>
-              <p className="text-xs text-white/70 mt-0.5">Upgrade to Pro</p>
-            </button>
+              <p className="text-xs text-text-secondary mt-0.5">Limited — upgrade anytime</p>
+            </div>
           )}
         </div>
 
@@ -95,9 +95,6 @@ export default function Layout() {
               >
                 <Icon className={`w-5 h-5 ${active ? 'text-pdf-600 dark:text-pdf-400' : ''}`} />
                 <span className="flex-1 text-left">{item.label}</span>
-                {item.premium && plan === 'free' && (
-                  <span className="badge-pro">Pro</span>
-                )}
               </button>
             )
           })}
@@ -124,7 +121,7 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar (mobile) */}
-        <header className="h-16 lg:hidden flex items-center justify-between px-4 border-b border-border dark:border-border-dark bg-white dark:bg-card-dark">
+        <header className="h-16 lg:hidden flex items-center justify-between px-4 border-b border-border dark:border-border-dark bg-white dark:bg-surface-card-dark">
           <button onClick={() => setSidebarOpen(true)} className="btn-ghost p-2">
             <Menu className="w-5 h-5" />
           </button>
