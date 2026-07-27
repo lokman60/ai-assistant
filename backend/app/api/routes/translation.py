@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Optional
 
 import fitz
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user_id
+from app.api.deps import get_current_user_id, get_optional_user_id
 from app.core.config import settings
 from app.core.database import get_db
 from app.schemas.common import ErrorResponse
@@ -25,11 +26,19 @@ svc = PDFTranslationService()
 def translate_pdf(
     file: UploadFile = File(...),
     target_language: str = Form(...),
-    user_id: str = Depends(get_current_user_id),
+    user_id: Optional[str] = Depends(get_optional_user_id),
     db: Session = Depends(get_db),
 ):
     if not file.filename.lower().endswith(".pdf"):
         return ErrorResponse(message="Only PDF files are supported")
+
+    if not user_id:
+        return {
+            "success": False,
+            "error": "plan_limit",
+            "message": "Sign up to translate PDFs — it's free!",
+            "data": {"feature": "pdf_translation", "limit": 1, "pages": 0},
+        }
 
     os.makedirs(settings.upload_dir, exist_ok=True)
     temp_path = os.path.join(settings.upload_dir, f"translate_{file.filename}")

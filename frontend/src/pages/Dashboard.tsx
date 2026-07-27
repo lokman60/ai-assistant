@@ -39,7 +39,7 @@ export default function Dashboard() {
             </span>
           )}
         </div>
-        <Link to="/upload" className="flex items-center gap-2 bg-pdf-600 text-white px-4 py-2 rounded-lg hover:bg-pdf-700 transition-colors text-sm font-medium">
+        <Link to="../upload" className="flex items-center gap-2 bg-pdf-600 text-white px-4 py-2 rounded-lg hover:bg-pdf-700 transition-colors text-sm font-medium">
           <Upload className="w-4 h-4" />
           Upload Document
         </Link>
@@ -94,7 +94,7 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
           <h2 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-4">Recent Documents</h2>
           {docs.length === 0 ? (
-            <p className="text-text-secondary text-sm">No documents yet. <Link to="/upload" className="text-pdf-600 hover:underline">Upload one</Link></p>
+            <p className="text-text-secondary text-sm">No documents yet. <Link to="../upload" className="text-pdf-600 hover:underline">Upload one</Link></p>
           ) : (
             <div className="space-y-3">
               {docs.slice(0, 5).map((doc: any) => (
@@ -117,7 +117,7 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-card-dark p-6 rounded-xl border border-border dark:border-border-dark shadow-sm">
           <h2 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-4">Recent Conversations</h2>
           {convs.length === 0 ? (
-            <p className="text-text-secondary text-sm">No conversations yet. <Link to="/chat" className="text-pdf-600 hover:underline">Start one</Link></p>
+            <p className="text-text-secondary text-sm">No conversations yet. <Link to="../chat" className="text-pdf-600 hover:underline">Start one</Link></p>
           ) : (
             <div className="space-y-3">
               {convs.slice(0, 5).map((conv: any) => (

@@ -90,7 +90,7 @@ export default function Layout() {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   active
                     ? 'bg-pdf-50 dark:bg-pdf-900/20 text-pdf-700 dark:text-pdf-400'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-gray-800'
+                    : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 <Icon className={`w-5 h-5 ${active ? 'text-pdf-600 dark:text-pdf-400' : ''}`} />
@@ -107,7 +107,7 @@ export default function Layout() {
         <div className="p-4 border-t border-border dark:border-border-dark space-y-1">
           <button
             onClick={toggle}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
           >
             {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             {theme === 'light' ? 'Dark Mode' : 'Light Mode'}

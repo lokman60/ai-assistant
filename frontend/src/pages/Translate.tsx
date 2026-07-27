@@ -78,11 +78,11 @@ export default function TranslatePage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <Globe className="w-6 h-6 text-ai-600" />
           Translate PDF
         </h1>
-        <p className="text-sm text-gray-500 mt-1">Upload a PDF and translate it to another language while preserving the original layout</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Upload a PDF and translate it to another language while preserving the original layout</p>
       </div>
 
       {!file ? (
@@ -92,36 +92,36 @@ export default function TranslatePage() {
           onDragLeave={() => setDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all ${
-            dragOver ? 'border-ai-400 bg-ai-50/80' : 'border-gray-200 hover:border-ai-300 hover:bg-gray-50'
+            dragOver ? 'border-ai-400 bg-ai-50/80' : 'border-gray-200 dark:border-border-dark hover:border-ai-300 hover:bg-gray-50 dark:bg-gray-900'
           }`}
         >
           <input ref={fileInputRef} type="file" accept=".pdf" hidden onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-ai-50 to-ai-100 flex items-center justify-center mx-auto mb-4">
             <Upload className="w-6 h-6 text-ai-500" />
           </div>
-          <p className="text-sm font-medium text-gray-700">Drop your PDF here, or click to browse</p>
-          <p className="text-xs text-gray-400 mt-1">Preserves layout, images, and formatting</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Drop your PDF here, or click to browse</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Preserves layout, images, and formatting</p>
         </div>
       ) : (
         <div className="space-y-5">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
+          <div className="bg-white dark:bg-surface-card-dark rounded-xl border border-gray-200 dark:border-border-dark p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-ai-50 flex items-center justify-center flex-shrink-0">
               <FileText className="w-5 h-5 text-ai-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-              <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
             </div>
-            <button onClick={reset} className="text-xs text-gray-400 hover:text-red-500 transition-colors">Remove</button>
+            <button onClick={reset} className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:text-red-400 transition-colors">Remove</button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Target Language</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Target Language</label>
             <select
               value={language}
               onChange={e => setLanguage(e.target.value)}
               disabled={!!job}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ai-500/20 focus:border-ai-400 outline-none transition-all disabled:opacity-50"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-ai-500/20 focus:border-ai-400 outline-none transition-all disabled:opacity-50"
             >
               {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
@@ -136,22 +136,22 @@ export default function TranslatePage() {
               {submitting ? 'Starting...' : 'Start Translation'}
             </button>
           ) : (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+            <div className="bg-white dark:bg-surface-card-dark rounded-xl border border-gray-200 dark:border-border-dark p-6 space-y-4">
               {job.status === 'processing' || job.status === 'queued' ? (
                 <div className="text-center">
                   <Loader2 className="w-10 h-10 text-ai-500 animate-spin mx-auto mb-3" />
-                  <p className="text-sm font-medium text-gray-900">{job.message}</p>
-                  <div className="mt-3 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{job.message}</p>
+                  <div className="mt-3 w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-ai-500 to-ai-400 rounded-full transition-all duration-500" style={{ width: `${job.progress}%` }} />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">{job.progress}%</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{job.progress}%</p>
                 </div>
               ) : job.status === 'completed' ? (
                 <div className="text-center">
                   <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3">
                     <CheckCircle className="w-7 h-7 text-green-500" />
                   </div>
-                  <p className="text-sm font-medium text-gray-900 mb-3">Translation complete!</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Translation complete!</p>
                   <div className="flex gap-3 justify-center">
                     <a
                       href={translateApi.downloadUrl(job.id)}
@@ -161,7 +161,7 @@ export default function TranslatePage() {
                     </a>
                     <button
                       onClick={reset}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-border-dark rounded-lg hover:bg-gray-100 dark:bg-gray-800 transition-all"
                     >
                       <ArrowLeft className="w-4 h-4" /> Translate Another
                     </button>
@@ -170,11 +170,11 @@ export default function TranslatePage() {
               ) : (
                 <div className="text-center">
                   <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
-                    <XCircle className="w-7 h-7 text-red-500" />
+                    <XCircle className="w-7 h-7 text-red-500 dark:text-red-400" />
                   </div>
-                  <p className="text-sm font-medium text-gray-900">Translation failed</p>
-                  <p className="text-xs text-red-500 mt-1">{job.error || job.message}</p>
-                  <button onClick={reset} className="mt-3 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Translation failed</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1">{job.error || job.message}</p>
+                  <button onClick={reset} className="mt-3 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-border-dark rounded-lg hover:bg-gray-100 dark:bg-gray-800 transition-all">
                     Try Again
                   </button>
                 </div>
