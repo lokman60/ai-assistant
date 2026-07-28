@@ -258,7 +258,9 @@ class TranslationService:
             translated = []
 
         for idx, new_text in zip(translatable_indices, translated):
+            orig = flat_spans[idx][3].get("text", "")
             flat_spans[idx][3]["text"] = new_text
+            flat_spans[idx][3]["original_text"] = orig
 
         translated_blocks = []
         for bi, block in enumerate(text_blocks):
@@ -304,6 +306,11 @@ class LayoutRebuilder:
                     for span in line["spans"]:
                         text = span["text"]
                         if not text.strip():
+                            continue
+
+                        orig_text = span.get("original_text", "")
+                        if orig_text and text == orig_text:
+                            logger.info("Unchanged span, using line text: '%s'", text)
                             continue
 
                         bbox = span["bbox"]
