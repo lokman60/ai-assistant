@@ -89,32 +89,6 @@ def _resolve_font(pdf_font_name: str, flags: int = 0) -> str:
         return "Helvetica-Bold" if is_bold else "Helvetica"
 
 
-def _wrap_text(text: str, font_obj, max_width: float, fontsize: float) -> list[str]:
-    words = text.split()
-    if not words:
-        return [text]
-
-    lines = []
-    current_line = []
-    current_width = 0.0
-    space_width = font_obj.text_length(" ", fontsize=fontsize)
-
-    for word in words:
-        word_width = font_obj.text_length(word, fontsize=fontsize)
-        if current_width + word_width + (space_width if current_line else 0) <= max_width:
-            current_line.append(word)
-            current_width += word_width + (space_width if len(current_line) > 1 else 0)
-        else:
-            if current_line:
-                lines.append(" ".join(current_line))
-            current_line = [word]
-            current_width = word_width
-
-    if current_line:
-        lines.append(" ".join(current_line))
-
-    return lines if lines else [text]
-
 
 def _int_to_rgb(color_int: int) -> tuple[float, float, float]:
     if color_int == 0:
@@ -126,46 +100,6 @@ def _int_to_rgb(color_int: int) -> tuple[float, float, float]:
 
 
 MAX_BATCH_SIZE = 30
-
-
-def _translate_batch(texts: list[str], target_language: str) -> list[str]:
-    if not texts:
-        return texts
-
-    if len(texts) > MAX_BATCH_SIZE:
-        result = []
-        for i in range(0, len(texts), MAX_BATCH_SIZE):
-            chunk = texts[i:i + MAX_BATCH_SIZE]
-            result.extend(_translate_batch(chunk, target_language))
-        return result
-
-    items = "\n".join(f"{i+1}. {t}" for i, t in enumerate(texts))
-    prompt = (
-        "You are a professional translator.\n\n"
-        f"Translate each of the following texts into {target_language}.\n\n"
-        "Rules:\n"
-        "- Return ONLY the translations, one per line, in the same order.\n"
-        "- Each line must start with the number followed by a period (e.g. '1. translated text').\n"
-        "- Preserve meaning.\n"
-        "- Do not summarize or explain.\n"
-        "- Keep numbers, dates, and proper names unchanged.\n"
-        "- If a text is empty or contains only numbers/punctuation, return it unchanged.\n\n"
-        f"Texts:\n{items}"
-    )
-    messages = [{"role": "user", "content": prompt}]
-    raw = call_llm(messages).strip()
-
-    result = []
-    for line in raw.split("\n"):
-        line = line.strip()
-        if re.match(r"^\d+\.\s*", line):
-            result.append(re.sub(r"^\d+\.\s*", "", line, count=1).strip())
-
-    if len(result) != len(texts):
-        logger.warning("Batch mismatch: expected %d, got %d — trying per-text fallback", len(texts), len(result))
-        return [_translate_single(t, target_language) for t in texts]
-
-    return result
 
 
 def _translate_single(text: str, target_language: str) -> str:
@@ -183,6 +117,53 @@ def _translate_single(text: str, target_language: str) -> str:
     )
     messages = [{"role": "user", "content": prompt}]
     return call_llm(messages).strip()
+
+
+def _translate_spans(spans_with_context: list[tuple[str, str]], target_language: str) -> list[str]:
+    if not spans_with_context:
+        return []
+
+    if len(spans_with_context) > MAX_BATCH_SIZE:
+        result = []
+        for i in range(0, len(spans_with_context), MAX_BATCH_SIZE):
+            chunk = spans_with_context[i:i + MAX_BATCH_SIZE]
+            result.extend(_translate_spans(chunk, target_language))
+        return result
+
+    items = "\n".join(
+        f'{i+1}. In line "{line}" SPAN "{text}"'
+        for i, (text, line) in enumerate(spans_with_context)
+    )
+    prompt = (
+        "You are a professional translator.\n\n"
+        f"Translate each SPAN text into {target_language}.\n\n"
+        "Rules:\n"
+        "- Return ONLY the translations, one per line, in the same order.\n"
+        "- Each line must start with the number followed by a period (e.g. '1. translated text').\n"
+        "- Use the 'In line' context to translate each fragment accurately.\n"
+        "- Preserve meaning, numbers, dates, and proper names.\n"
+        "- Do not summarize or explain.\n"
+        "- If a text is empty or contains only numbers/punctuation, return it unchanged.\n\n"
+        "Example:\n"
+        '1. In line "Hello world" SPAN "Hello" → 1. مرحبا\n'
+        '2. In line "Hello world" SPAN " world" → 2.  العالم\n\n'
+        f"Texts:\n{items}"
+    )
+    messages = [{"role": "user", "content": prompt}]
+    raw = call_llm(messages).strip()
+
+    result = []
+    for line in raw.split("\n"):
+        line = line.strip()
+        if re.match(r"^\d+\.\s*", line):
+            result.append(re.sub(r"^\d+\.\s*", "", line, count=1).strip())
+
+    if len(result) != len(spans_with_context):
+        logger.warning("Span batch mismatch: expected %d, got %d — per-text fallback",
+                       len(spans_with_context), len(result))
+        return [_translate_single(t, target_language) for t, _ in spans_with_context]
+
+    return result
 
 
 class PDFExtractor:
@@ -246,105 +227,40 @@ class TranslationService:
     def translate_page(self, page_data: dict, page_index: int, total_pages: int, progress_callback=None) -> dict:
         text_blocks = page_data["text_blocks"]
 
-        flat_index = []
-        all_texts = []
+        flat_spans = []
         for bi, block in enumerate(text_blocks):
             for li, line in enumerate(block["lines"]):
-                flat_index.append((bi, li))
-                all_texts.append(line["text"])
+                line_text = line["text"]
+                for si, span in enumerate(line["spans"]):
+                    flat_spans.append((bi, li, si, span, line_text))
 
+        all_texts = [fs[3]["text"] for fs in flat_spans]
         translatable_indices = [i for i, t in enumerate(all_texts) if t.strip()]
-        translatable_texts = [all_texts[i] for i in translatable_indices]
+        spans_with_context = [(all_texts[i], flat_spans[i][4]) for i in translatable_indices]
 
-        if translatable_texts:
-            translated = _translate_batch(translatable_texts, self._target)
+        if spans_with_context:
+            translated = _translate_spans(spans_with_context, self._target)
         else:
             translated = []
 
-        result_map = {}
-        for idx, text in zip(translatable_indices, translated):
-            result_map[idx] = text
+        for idx, new_text in zip(translatable_indices, translated):
+            flat_spans[idx][3]["text"] = new_text
 
         translated_blocks = []
         for bi, block in enumerate(text_blocks):
             translated_lines = []
-            offset = sum(len(text_blocks[b]["lines"]) for b in range(bi))
             for li, line in enumerate(block["lines"]):
-                idx = offset + li
-                new_text = result_map.get(idx, line["text"])
-                translated_lines.append({
-                    **line,
-                    "original_text": line["text"],
-                    "text": new_text,
-                })
+                rebuilt_text = "".join(span["text"] for span in line["spans"])
+                translated_lines.append({**line, "original_text": line["text"], "text": rebuilt_text})
             translated_blocks.append({**block, "lines": translated_lines})
 
-        return {
-            **page_data,
-            "text_blocks": translated_blocks,
-        }
+        return {**page_data, "text_blocks": translated_blocks}
 
 
 class LayoutRebuilder:
     def __init__(self, output_dir: str):
         self._output_dir = output_dir
         _ensure_font()
-
-    def _original_line_height(self, lines: list[dict], font_size: float) -> float:
-        if len(lines) >= 2:
-            gaps = []
-            for i in range(len(lines) - 1):
-                g = lines[i + 1]["bbox"][1] - lines[i]["bbox"][1]
-                if g > 0:
-                    gaps.append(g)
-            if gaps:
-                return sum(gaps) / len(gaps)
-        return lines[0]["bbox"][3] - lines[0]["bbox"][1]
-
-    @staticmethod
-    def _merge_block_text(lines: list[dict]) -> str:
-        parts = []
-        for li, line in enumerate(lines):
-            t = line["text"].strip()
-            if t:
-                if parts and not t[0] in ".!?,:;)]}%":
-                    parts.append(" ")
-                parts.append(t)
-        return "".join(parts)
-
-    @staticmethod
-    def _max_safe_expand(block_bbox: tuple, all_blocks: list, page_width: float) -> float:
-        bx0, by0, bx1, by1 = block_bbox
-        safe = page_width - 10
-        for binfo in all_blocks:
-            ob = binfo["block"]["bbox"]
-            if ob == block_bbox:
-                continue
-            if ob[0] <= bx1 + 1:
-                continue
-            tol = 5
-            if max(by0, ob[1]) - tol < min(by1, ob[3]) + tol:
-                safe = min(safe, ob[0] - 2)
-        return safe
-
-    def _compute_wrapped(self, font_obj, full_text: str, block_width: float, font_size: float,
-                         max_expand_to: float = 0, block_x: float = 0):
-        used_width = block_width
-        if max_expand_to > block_x + block_width:
-            used_width = max_expand_to - block_x
-
-        tw = font_obj.text_length(full_text, fontsize=font_size)
-        if tw <= used_width:
-            return [full_text], font_size, used_width
-
-        wrapped = _wrap_text(full_text, font_obj, used_width, font_size)
-        max_wl = max(font_obj.text_length(wl, fontsize=font_size) for wl in wrapped)
-        if max_wl <= used_width:
-            return wrapped, font_size, used_width
-
-        ratio = used_width / max_wl
-        reduced = max(font_size * ratio, font_size * 0.9)
-        return _wrap_text(full_text, font_obj, used_width, reduced), reduced, used_width
 
     def rebuild(self, pages_data: list[dict], original_pdf: str) -> str:
         job_id = str(uuid.uuid4())
@@ -358,144 +274,35 @@ class LayoutRebuilder:
         for page_data in pages_data:
             page_num = page_data["page_num"]
             src_page = src_doc[page_num - 1]
-            page_width = src_page.rect.width
-            page_height = src_page.rect.height
 
-            all_blocks = []
-            for block in page_data["text_blocks"]:
-                all_blocks.append({"block": block, "overflow": False})
-
-            all_blocks.sort(key=lambda b: b["block"]["bbox"][1])
-
-            page_items = []
-            shift_y = 0.0
-
-            for binfo in all_blocks:
-                block = binfo["block"]
-                lines = block["lines"]
-                bbox = block["bbox"]
-                block_x = bbox[0]
-                block_width = bbox[2] - bbox[0]
-                orig_height = bbox[3] - bbox[1]
-
-                first_span = lines[0]["spans"][0] if lines and lines[0]["spans"] else {}
-                font_name = first_span.get("font", "helv")
-                font_size = first_span.get("size", 10)
-                flags = first_span.get("flags", 0)
-                font_color = first_span.get("color", 0)
-                resolved = _resolve_font(font_name, flags)
-                color = _int_to_rgb(font_color)
-                font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
-                orig_line_height = self._original_line_height(lines, font_size)
-                line_height = orig_line_height if orig_line_height > 0 else font_size * 1.3
-
-                bullet_count = sum(1 for l in lines if re.match(r"^\s*[•\-*\d]+[\.\)]\s", l["text"].strip()))
-                is_bullet = bullet_count >= 2
-
-                max_expand_to = self._max_safe_expand(bbox, all_blocks, page_width)
-
-                if is_bullet:
-                    bullet_items = []
-                    cumulative_h = 0
-                    for line in lines:
-                        text = line["text"].strip()
-                        if not text:
-                            continue
-                        wl, fs, uw = self._compute_wrapped(font_obj, text, block_width, font_size,
-                                                           max_expand_to, block_x)
-                        bullet_items.append({"texts": wl, "top": cumulative_h})
-                        cumulative_h += len(wl) * line_height
-
-                    total_h = cumulative_h
-                    extra = max(0, total_h - orig_height)
-                    new_y0 = bbox[1] + shift_y
-                    new_y1 = new_y0 + max(orig_height, total_h)
-
-                    page_items.append({
-                        "type": "bullet",
-                        "bullet_items": bullet_items,
-                        "block_x": block_x,
-                        "font_size": font_size,
-                        "resolved": resolved,
-                        "color": color,
-                        "font_file": font_file,
-                        "line_height": line_height,
-                        "new_y0": new_y0,
-                    })
-                    shift_y += extra
-                else:
-                    full_text = self._merge_block_text(lines)
-                    if not full_text:
-                        continue
-
-                    wrapped, used_size, used_width = self._compute_wrapped(
-                        font_obj, full_text, block_width, font_size,
-                        max_expand_to, block_x
-                    )
-
-                    required_height = len(wrapped) * line_height
-                    extra = max(0, required_height - orig_height)
-                    new_y0 = bbox[1] + shift_y
-                    new_y1 = new_y0 + max(orig_height, required_height)
-
-                    page_items.append({
-                        "type": "para",
-                        "wrapped": wrapped,
-                        "block_x": block_x,
-                        "font_size": used_size,
-                        "resolved": resolved,
-                        "color": color,
-                        "font_file": font_file,
-                        "line_height": line_height,
-                        "new_y0": new_y0,
-                    })
-                    shift_y += extra
-
-            src_page = src_doc[page_num - 1]
             for block in page_data["text_blocks"]:
                 for line in block["lines"]:
-                    if line["text"].strip():
-                        src_page.add_redact_annot(fitz.Rect(*line["bbox"]), fill=None)
+                    for span in line["spans"]:
+                        if span["text"].strip():
+                            src_page.add_redact_annot(fitz.Rect(*span["bbox"]), fill=None)
             src_page.apply_redactions()
 
             out_doc.insert_pdf(src_doc, from_page=page_num - 1, to_page=page_num - 1)
             new_page = out_doc[-1]
 
-            max_bottom = 0.0
-            for item in page_items:
-                if item["type"] == "bullet":
-                    total_h = sum(len(bi["texts"]) for bi in item["bullet_items"]) * item["line_height"]
-                else:
-                    total_h = len(item["wrapped"]) * item["line_height"]
-                item_bottom = item["new_y0"] + total_h
-                if item_bottom > max_bottom:
-                    max_bottom = item_bottom
+            for block in page_data["text_blocks"]:
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        text = span["text"]
+                        if not text.strip():
+                            continue
 
-            fit_scale = page_height / max_bottom if max_bottom > 0 else 1.0
-            scale = max(min(fit_scale, 1.0), 0.9)
+                        bbox = span["bbox"]
+                        resolved = _resolve_font(span.get("font", "helv"), span.get("flags", 0))
+                        color = _int_to_rgb(span.get("color", 0))
+                        size = span.get("size", 10)
+                        x = bbox[0]
+                        y = bbox[3] - 1
 
-            for item in page_items:
-                bx = item["block_x"]
-                fs = item["font_size"] * scale
-                resolved = item["resolved"]
-                color = item["color"]
-                ffile = item["font_file"]
-                lh = item["line_height"] * scale
-                y0 = item["new_y0"] * scale
-
-                if item["type"] == "bullet":
-                    for bi in item["bullet_items"]:
-                        y = y0 + bi["top"] * scale
-                        for wl in bi["texts"]:
-                            new_page.insert_text((bx, y), wl, fontsize=fs, color=color,
-                                                 fontname=resolved, fontfile=ffile)
-                            y += lh
-                else:
-                    y = y0
-                    for wl in item["wrapped"]:
-                        new_page.insert_text((bx, y), wl, fontsize=fs, color=color,
-                                             fontname=resolved, fontfile=ffile)
-                        y += lh
+                        new_page.insert_text(
+                            (x, y), text, fontsize=size, color=color,
+                            fontname=resolved, fontfile=font_file,
+                        )
 
         src_doc.close()
         out_doc.save(output_path, garbage=4, deflate=True)
