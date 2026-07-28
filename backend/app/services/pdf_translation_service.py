@@ -355,8 +355,6 @@ class LayoutRebuilder:
         out_doc = fitz.open()
         font_file = str(FONT_PATH) if FONT_PATH.exists() else None
 
-        overflow_blocks = []
-
         for page_data in pages_data:
             page_num = page_data["page_num"]
             src_page = src_doc[page_num - 1]
@@ -364,32 +362,21 @@ class LayoutRebuilder:
             page_height = src_page.rect.height
 
             all_blocks = []
-            for ov in overflow_blocks:
-                all_blocks.append({"block": ov, "overflow": True})
-            overflow_blocks = []
             for block in page_data["text_blocks"]:
                 all_blocks.append({"block": block, "overflow": False})
 
-            all_blocks.sort(key=lambda b: (
-                0 if b["overflow"] else b["block"]["bbox"][1]
-            ))
+            all_blocks.sort(key=lambda b: b["block"]["bbox"][1])
 
             page_items = []
             shift_y = 0.0
-            overflow_started = False
 
             for binfo in all_blocks:
                 block = binfo["block"]
                 lines = block["lines"]
-                is_overflow = binfo["overflow"]
                 bbox = block["bbox"]
                 block_x = bbox[0]
                 block_width = bbox[2] - bbox[0]
-                orig_height = bbox[3] - bbox[1] if not is_overflow else 0
-
-                if overflow_started:
-                    overflow_blocks.append(block)
-                    continue
+                orig_height = bbox[3] - bbox[1]
 
                 first_span = lines[0]["spans"][0] if lines and lines[0]["spans"] else {}
                 font_name = first_span.get("font", "helv")
@@ -421,13 +408,8 @@ class LayoutRebuilder:
 
                     total_h = cumulative_h
                     extra = max(0, total_h - orig_height)
-                    new_y0 = (0 if is_overflow else bbox[1]) + shift_y
+                    new_y0 = bbox[1] + shift_y
                     new_y1 = new_y0 + max(orig_height, total_h)
-
-                    if new_y1 > page_height:
-                        overflow_started = True
-                        overflow_blocks.append(block)
-                        continue
 
                     page_items.append({
                         "type": "bullet",
@@ -453,13 +435,8 @@ class LayoutRebuilder:
 
                     required_height = len(wrapped) * line_height
                     extra = max(0, required_height - orig_height)
-                    new_y0 = (0 if is_overflow else bbox[1]) + shift_y
+                    new_y0 = bbox[1] + shift_y
                     new_y1 = new_y0 + max(orig_height, required_height)
-
-                    if new_y1 > page_height:
-                        overflow_started = True
-                        overflow_blocks.append(block)
-                        continue
 
                     page_items.append({
                         "type": "para",
@@ -484,18 +461,30 @@ class LayoutRebuilder:
             out_doc.insert_pdf(src_doc, from_page=page_num - 1, to_page=page_num - 1)
             new_page = out_doc[-1]
 
+            max_bottom = 0.0
+            for item in page_items:
+                if item["type"] == "bullet":
+                    total_h = sum(len(bi["texts"]) for bi in item["bullet_items"]) * item["line_height"]
+                else:
+                    total_h = len(item["wrapped"]) * item["line_height"]
+                item_bottom = item["new_y0"] + total_h
+                if item_bottom > max_bottom:
+                    max_bottom = item_bottom
+
+            scale = min(1.0, page_height / max_bottom) if max_bottom > 0 else 1.0
+
             for item in page_items:
                 bx = item["block_x"]
-                fs = item["font_size"]
+                fs = item["font_size"] * scale
                 resolved = item["resolved"]
                 color = item["color"]
                 ffile = item["font_file"]
-                lh = item["line_height"]
-                y0 = item["new_y0"]
+                lh = item["line_height"] * scale
+                y0 = item["new_y0"] * scale
 
                 if item["type"] == "bullet":
                     for bi in item["bullet_items"]:
-                        y = y0 + bi["top"]
+                        y = y0 + bi["top"] * scale
                         for wl in bi["texts"]:
                             new_page.insert_text((bx, y), wl, fontsize=fs, color=color,
                                                  fontname=resolved, fontfile=ffile)
@@ -506,86 +495,6 @@ class LayoutRebuilder:
                         new_page.insert_text((bx, y), wl, fontsize=fs, color=color,
                                              fontname=resolved, fontfile=ffile)
                         y += lh
-
-        while overflow_blocks:
-            page_width = src_doc[-1].rect.width
-            page_height = src_doc[-1].rect.height
-            new_pg = out_doc.new_page(width=page_width, height=page_height)
-
-            shift_y = 0.0
-            still_overflowing = []
-
-            for block in overflow_blocks:
-                lines = block["lines"]
-                bbox = block["bbox"]
-                block_x = bbox[0]
-                block_width = bbox[2] - bbox[0]
-
-                first_span = lines[0]["spans"][0] if lines and lines[0]["spans"] else {}
-                font_name = first_span.get("font", "helv")
-                font_size = first_span.get("size", 10)
-                flags = first_span.get("flags", 0)
-                font_color = first_span.get("color", 0)
-                resolved = _resolve_font(font_name, flags)
-                color = _int_to_rgb(font_color)
-                font_obj = fitz.Font(fontname=resolved, fontfile=font_file) if font_file else fitz.Font(fontname=resolved)
-                orig_line_height = self._original_line_height(lines, font_size)
-                lh = orig_line_height if orig_line_height > 0 else font_size * 1.3
-
-                bullet_count = sum(1 for l in lines if re.match(r"^\s*[•\-*\d]+[\.\)]\s", l["text"].strip()))
-                is_bullet = bullet_count >= 2
-
-                max_expand_to = page_width - 10
-
-                if is_bullet:
-                    bullet_items = []
-                    cumulative_h = 0
-                    for line in lines:
-                        text = line["text"].strip()
-                        if not text:
-                            continue
-                        wl, fs, uw = self._compute_wrapped(font_obj, text, block_width, font_size,
-                                                           max_expand_to, block_x)
-                        bullet_items.append({"texts": wl, "top": cumulative_h})
-                        cumulative_h += len(wl) * lh
-
-                    new_y0 = shift_y
-                    new_y1 = new_y0 + cumulative_h
-
-                    if new_y1 > page_height:
-                        still_overflowing.append(block)
-                        continue
-
-                    for bi in bullet_items:
-                        y = new_y0 + bi["top"]
-                        for wl in bi["texts"]:
-                            new_pg.insert_text((block_x, y), wl, fontsize=fs, color=color,
-                                               fontname=resolved, fontfile=font_file)
-                            y += lh
-                    shift_y += cumulative_h
-                else:
-                    full_text = self._merge_block_text(lines)
-                    if not full_text:
-                        continue
-
-                    wrapped, used_size, uw = self._compute_wrapped(font_obj, full_text, block_width, font_size,
-                                                                    max_expand_to, block_x)
-                    required_height = len(wrapped) * lh
-                    new_y0 = shift_y
-                    new_y1 = new_y0 + required_height
-
-                    if new_y1 > page_height:
-                        still_overflowing.append(block)
-                        continue
-
-                    y = new_y0
-                    for wl in wrapped:
-                        new_pg.insert_text((block_x, y), wl, fontsize=used_size, color=color,
-                                           fontname=resolved, fontfile=font_file)
-                        y += lh
-                    shift_y += required_height
-
-            overflow_blocks = still_overflowing
 
         src_doc.close()
         out_doc.save(output_path, garbage=4, deflate=True)
