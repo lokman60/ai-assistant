@@ -471,7 +471,8 @@ class LayoutRebuilder:
                 if item_bottom > max_bottom:
                     max_bottom = item_bottom
 
-            scale = min(1.0, page_height / max_bottom) if max_bottom > 0 else 1.0
+            fit_scale = page_height / max_bottom if max_bottom > 0 else 1.0
+            scale = max(min(fit_scale, 1.0), 0.9)
 
             for item in page_items:
                 bx = item["block_x"]
