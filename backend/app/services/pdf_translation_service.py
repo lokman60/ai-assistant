@@ -131,36 +131,50 @@ def _translate_spans(spans_with_context: list[tuple[str, str]], target_language:
         return result
 
     items = "\n".join(
-        f'{i+1}. In line "{line}" SPAN "{text}"'
+        f"[{i+1}] text=\"{text}\" context=\"{line}\""
         for i, (text, line) in enumerate(spans_with_context)
     )
     prompt = (
-        "You are a professional translator.\n\n"
-        f"Translate each SPAN text into {target_language}.\n\n"
+        "You are a professional text translator.\n\n"
+        f"Translate each text into {target_language}.\n\n"
         "Rules:\n"
-        "- Return ONLY the translations, one per line, in the same order.\n"
-        "- Each line must start with the number followed by a period (e.g. '1. translated text').\n"
-        "- Use the 'In line' context to translate each fragment accurately.\n"
-        "- Preserve meaning, numbers, dates, and proper names.\n"
-        "- Do not summarize or explain.\n"
-        "- If a text is empty or contains only numbers/punctuation, return it unchanged.\n\n"
+        "- Return ONLY a numbered list of translations, nothing else.\n"
+        "- Each line: N. translated_text\n"
+        "- Preserve original whitespace before/after the text.\n"
+        "- Use the 'context' to translate each fragment accurately.\n"
+        "- Keep numbers, dates, and proper names unchanged.\n\n"
         "Example:\n"
-        '1. In line "Hello world" SPAN "Hello" → 1. مرحبا\n'
-        '2. In line "Hello world" SPAN " world" → 2.  العالم\n\n'
-        f"Texts:\n{items}"
+        'Input: [1] text="Hello " context="Hello world"\n'
+        'Input: [2] text="world" context="Hello world"\n'
+        "Output:\n"
+        "1. مرحبا \n"
+        "2. العالم\n\n"
+        "Translate these:\n"
+        f"{items}"
     )
+    logger.info("Translating %d spans in batch", len(spans_with_context))
     messages = [{"role": "user", "content": prompt}]
     raw = call_llm(messages).strip()
+    logger.debug("LLM response: %s", raw[:500])
 
-    result = []
+    result = [""] * len(spans_with_context)
     for line in raw.split("\n"):
         line = line.strip()
-        if re.match(r"^\d+\.\s*", line):
-            result.append(re.sub(r"^\d+\.\s*", "", line, count=1).strip())
+        m = re.match(r"^(\d+)\.\s*(.*)", line)
+        if m:
+            idx = int(m.group(1)) - 1
+            if 0 <= idx < len(result):
+                result[idx] = m.group(2)
+            continue
+        m = re.match(r"^\[(\d+)\]\s*(.*)", line)
+        if m:
+            idx = int(m.group(1)) - 1
+            if 0 <= idx < len(result):
+                result[idx] = m.group(2)
 
-    if len(result) != len(spans_with_context):
-        logger.warning("Span batch mismatch: expected %d, got %d — per-text fallback",
-                       len(spans_with_context), len(result))
+    if any(not r for r in result):
+        logger.warning("Span batch mismatch: %d/%d filled — per-text fallback",
+                       sum(1 for r in result if r), len(result))
         return [_translate_single(t, target_language) for t, _ in spans_with_context]
 
     return result
