@@ -309,7 +309,7 @@ class LayoutRebuilder:
                         bbox = span["bbox"]
                         resolved = _resolve_font(span.get("font", "helv"), span.get("flags", 0))
                         color = _int_to_rgb(span.get("color", 0))
-                        size = span.get("size", 10)
+                        size = span.get("size", 10) * 0.85
                         x = bbox[0]
                         y = bbox[3] - 1
 
