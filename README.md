@@ -28,7 +28,7 @@
 ## Demo
 
 <p align="center">
-  <a href="#">▶️ Live Demo (coming soon)</a>
+  <a href="https://ai-assistant-5mnk.onrender.com">▶️ Live Demo (coming soon)</a>
 </p>
 
 <br>
