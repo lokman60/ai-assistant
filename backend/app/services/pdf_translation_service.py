@@ -119,45 +119,37 @@ def _translate_single(text: str, target_language: str) -> str:
     return call_llm(messages).strip()
 
 
-def _translate_spans(spans_with_context: list[tuple[str, str]], target_language: str) -> list[str]:
-    if not spans_with_context:
+def _translate_spans(texts: list[str], target_language: str) -> list[str]:
+    if not texts:
         return []
 
-    if len(spans_with_context) > MAX_BATCH_SIZE:
+    if len(texts) > MAX_BATCH_SIZE:
         result = []
-        for i in range(0, len(spans_with_context), MAX_BATCH_SIZE):
-            chunk = spans_with_context[i:i + MAX_BATCH_SIZE]
+        for i in range(0, len(texts), MAX_BATCH_SIZE):
+            chunk = texts[i:i + MAX_BATCH_SIZE]
             result.extend(_translate_spans(chunk, target_language))
         return result
 
-    items = "\n".join(
-        f"[{i+1}] text=\"{text}\" context=\"{line}\""
-        for i, (text, line) in enumerate(spans_with_context)
-    )
+    items = "\n".join(f"{i+1}. {t}" for i, t in enumerate(texts))
     prompt = (
-        "You are a professional text translator.\n\n"
-        f"Translate each text into {target_language}.\n\n"
+        "You are a professional translator.\n\n"
+        f"Translate each text below into {target_language}.\n\n"
+        "These texts appear in order and may form connected phrases.\n"
+        "Use the surrounding texts as context to translate each one accurately.\n\n"
         "Rules:\n"
-        "- Return ONLY a numbered list of translations, nothing else.\n"
-        "- Each line: N. translated_text\n"
-        "- Preserve original whitespace before/after the text.\n"
-        "- Use the 'context' to translate each fragment accurately.\n"
-        "- Keep numbers, dates, and proper names unchanged.\n\n"
-        "Example:\n"
-        'Input: [1] text="Hello " context="Hello world"\n'
-        'Input: [2] text="world" context="Hello world"\n'
-        "Output:\n"
-        "1. مرحبا \n"
-        "2. العالم\n\n"
-        "Translate these:\n"
-        f"{items}"
+        "- Return ONLY the translations in the same order, one per line.\n"
+        "- Format: N. translated_text\n"
+        "- Preserve meaning, numbers, dates, and proper names.\n"
+        "- Do not summarize, explain, or omit any item.\n"
+        "- If a text is empty or only punctuation/symbols, return it unchanged.\n\n"
+        f"Texts:\n{items}"
     )
-    logger.info("Translating %d spans in batch", len(spans_with_context))
+    logger.info("Translating %d texts sequentially", len(texts))
     messages = [{"role": "user", "content": prompt}]
     raw = call_llm(messages).strip()
     logger.debug("LLM response: %s", raw[:500])
 
-    result = [""] * len(spans_with_context)
+    result = [""] * len(texts)
     for line in raw.split("\n"):
         line = line.strip()
         m = re.match(r"^(\d+)\.\s*(.*)", line)
@@ -173,9 +165,9 @@ def _translate_spans(spans_with_context: list[tuple[str, str]], target_language:
                 result[idx] = m.group(2)
 
     if any(not r for r in result):
-        logger.warning("Span batch mismatch: %d/%d filled — per-text fallback",
+        logger.warning("Batch mismatch: %d/%d filled — per-text fallback",
                        sum(1 for r in result if r), len(result))
-        return [_translate_single(t, target_language) for t, _ in spans_with_context]
+        return [_translate_single(t, target_language) for t in texts]
 
     return result
 
@@ -244,16 +236,15 @@ class TranslationService:
         flat_spans = []
         for bi, block in enumerate(text_blocks):
             for li, line in enumerate(block["lines"]):
-                line_text = line["text"]
                 for si, span in enumerate(line["spans"]):
-                    flat_spans.append((bi, li, si, span, line_text))
+                    flat_spans.append((bi, li, si, span))
 
         all_texts = [fs[3]["text"] for fs in flat_spans]
         translatable_indices = [i for i, t in enumerate(all_texts) if t.strip()]
-        spans_with_context = [(all_texts[i], flat_spans[i][4]) for i in translatable_indices]
+        translatable_texts = [all_texts[i] for i in translatable_indices]
 
-        if spans_with_context:
-            translated = _translate_spans(spans_with_context, self._target)
+        if translatable_texts:
+            translated = _translate_spans(translatable_texts, self._target)
         else:
             translated = []
 
@@ -264,7 +255,7 @@ class TranslationService:
 
         lines_with_untranslated = set()
         for idx in translatable_indices:
-            bi, li, si, span, _ = flat_spans[idx]
+            bi, li, si, span = flat_spans[idx]
             if span.get("text") == span.get("original_text", ""):
                 lines_with_untranslated.add((bi, li))
 
