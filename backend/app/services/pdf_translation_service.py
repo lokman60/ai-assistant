@@ -262,6 +262,44 @@ class TranslationService:
             flat_spans[idx][3]["text"] = new_text
             flat_spans[idx][3]["original_text"] = orig
 
+        lines_with_untranslated = set()
+        for idx in translatable_indices:
+            bi, li, si, span, _ = flat_spans[idx]
+            if span.get("text") == span.get("original_text", ""):
+                lines_with_untranslated.add((bi, li))
+
+        if lines_with_untranslated:
+            line_texts = []
+            line_map = []
+            for bi, li in sorted(lines_with_untranslated):
+                t = text_blocks[bi]["lines"][li]["text"]
+                if t.strip():
+                    line_texts.append(t)
+                    line_map.append((bi, li))
+            if line_texts:
+                items = "\n".join(f"{i+1}. {t}" for i, t in enumerate(line_texts))
+                prompt = (
+                    "You are a professional translator.\n\n"
+                    f"Translate each text into {self._target}.\n\n"
+                    "Rules:\n"
+                    "- Return ONLY the translations, one per line, in the same order.\n"
+                    "- Each line must start with the number followed by a period (e.g. '1. translated text').\n"
+                    "- Preserve meaning, numbers, dates, and proper names.\n"
+                    "- Do not summarize or explain.\n\n"
+                    f"Texts:\n{items}"
+                )
+                raw = call_llm([{"role": "user", "content": prompt}]).strip()
+                line_translations = {}
+                for line in raw.split("\n"):
+                    m = re.match(r"^(\d+)\.\s*(.*)", line.strip())
+                    if m:
+                        idx = int(m.group(1)) - 1
+                        if 0 <= idx < len(line_map):
+                            bi, li = line_map[idx]
+                            line_translations[(bi, li)] = m.group(2)
+                for (bi, li), translated_text in line_translations.items():
+                    text_blocks[bi]["lines"][li]["translated_line"] = translated_text
+
         translated_blocks = []
         for bi, block in enumerate(text_blocks):
             translated_lines = []
@@ -303,15 +341,24 @@ class LayoutRebuilder:
 
             for block in page_data["text_blocks"]:
                 for line in block["lines"]:
+                    spans_rendered = False
                     for span in line["spans"]:
+                        if spans_rendered:
+                            continue
+
                         text = span["text"]
                         if not text.strip():
                             continue
 
                         orig_text = span.get("original_text", "")
                         if orig_text and text == orig_text:
-                            logger.info("Unchanged span, using line text: '%s'", text)
-                            continue
+                            translated_line = line.get("translated_line", "")
+                            if translated_line.strip():
+                                text = translated_line
+                            else:
+                                continue
+
+                        spans_rendered = True
 
                         bbox = span["bbox"]
                         resolved = _resolve_font(span.get("font", "helv"), span.get("flags", 0))
