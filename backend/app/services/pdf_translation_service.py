@@ -312,12 +312,26 @@ class LayoutRebuilder:
                 parts.append(t)
         return "".join(parts)
 
+    @staticmethod
+    def _max_safe_expand(block_bbox: tuple, all_blocks: list, page_width: float) -> float:
+        bx0, by0, bx1, by1 = block_bbox
+        safe = page_width - 10
+        for binfo in all_blocks:
+            ob = binfo["block"]["bbox"]
+            if ob == block_bbox:
+                continue
+            if ob[0] <= bx1 + 1:
+                continue
+            tol = 5
+            if max(by0, ob[1]) - tol < min(by1, ob[3]) + tol:
+                safe = min(safe, ob[0] - 2)
+        return safe
+
     def _compute_wrapped(self, font_obj, full_text: str, block_width: float, font_size: float,
-                         max_width_expansion: float = 0, page_width: float = 0, block_x: float = 0):
+                         max_expand_to: float = 0, block_x: float = 0):
         used_width = block_width
-        if max_width_expansion > 0:
-            available = min(block_x + block_width + max_width_expansion, page_width - 10)
-            used_width = available - block_x
+        if max_expand_to > block_x + block_width:
+            used_width = max_expand_to - block_x
 
         tw = font_obj.text_length(full_text, fontsize=font_size)
         if tw <= used_width:
@@ -391,6 +405,8 @@ class LayoutRebuilder:
                 bullet_count = sum(1 for l in lines if re.match(r"^\s*[•\-*\d]+[\.\)]\s", l["text"].strip()))
                 is_bullet = bullet_count >= 2
 
+                max_expand_to = self._max_safe_expand(bbox, all_blocks, page_width)
+
                 if is_bullet:
                     bullet_items = []
                     cumulative_h = 0
@@ -399,7 +415,7 @@ class LayoutRebuilder:
                         if not text:
                             continue
                         wl, fs, uw = self._compute_wrapped(font_obj, text, block_width, font_size,
-                                                           block_width * 0.15, page_width, block_x)
+                                                           max_expand_to, block_x)
                         bullet_items.append({"texts": wl, "top": cumulative_h})
                         cumulative_h += len(wl) * line_height
 
@@ -432,7 +448,7 @@ class LayoutRebuilder:
 
                     wrapped, used_size, used_width = self._compute_wrapped(
                         font_obj, full_text, block_width, font_size,
-                        block_width * 0.15, page_width, block_x
+                        max_expand_to, block_x
                     )
 
                     required_height = len(wrapped) * line_height
@@ -519,6 +535,8 @@ class LayoutRebuilder:
                 bullet_count = sum(1 for l in lines if re.match(r"^\s*[•\-*\d]+[\.\)]\s", l["text"].strip()))
                 is_bullet = bullet_count >= 2
 
+                max_expand_to = page_width - 10
+
                 if is_bullet:
                     bullet_items = []
                     cumulative_h = 0
@@ -527,7 +545,7 @@ class LayoutRebuilder:
                         if not text:
                             continue
                         wl, fs, uw = self._compute_wrapped(font_obj, text, block_width, font_size,
-                                                           block_width * 0.15, page_width, block_x)
+                                                           max_expand_to, block_x)
                         bullet_items.append({"texts": wl, "top": cumulative_h})
                         cumulative_h += len(wl) * lh
 
@@ -551,7 +569,7 @@ class LayoutRebuilder:
                         continue
 
                     wrapped, used_size, uw = self._compute_wrapped(font_obj, full_text, block_width, font_size,
-                                                                   block_width * 0.15, page_width, block_x)
+                                                                    max_expand_to, block_x)
                     required_height = len(wrapped) * lh
                     new_y0 = shift_y
                     new_y1 = new_y0 + required_height
